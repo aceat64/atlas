@@ -2,11 +2,6 @@
 
 ATLAS backend api.
 
-## TODO
-
-* search and order by
-* pytest
-
 ## Libraries
 
 * [FastAPI](https://fastapi.tiangolo.com)

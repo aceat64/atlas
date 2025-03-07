@@ -1,4 +1,4 @@
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
 
 # Install uv
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
@@ -37,7 +37,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
   uv sync --frozen --no-dev
 
 
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 RUN apt-get update && apt-get install --no-install-recommends -y libpq5=15.10-* \
   && apt-get clean \
@@ -62,7 +62,7 @@ ENV \
   UVICORN_HOST=0.0.0.0 \
   UVICORN_PORT=8080 \
   UVICORN_APP=app.main:app \
-  UVICORN_LOG_CONFIG=/app/logging.yaml \
+  # UVICORN_LOG_CONFIG=/app/logging.yaml \
   # Trust proxy headers such as `X-Forwarded-For`, the default is to only trust headers from 127.0.0.1
   FORWARDED_ALLOW_IPS="*" \
   # The OTEL_RESOURCE_ATTRIBUTES environment variable allows resource attributes to be passed to the SDK at process invocation.

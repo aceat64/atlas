@@ -13,13 +13,13 @@ dependencies = [
     "pydantic-settings>=2.8.1",
     "pyjwt[crypto]>=2.10.1",
     "sqlalchemy[asyncio]>=2.0.38",
-    "sqlmodel>=0.0.23",
+    "sqlmodel>=0.0.24",
 ]
 
 [dependency-groups]
 dev = [
     "mypy>=1.15.0",
-    "ruff>=0.9.5",
+    "ruff>=0.9.9",
 ]
 
 [project.scripts]

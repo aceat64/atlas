@@ -10,9 +10,16 @@
   - [ ] Rooms
   - [ ] Stacks
   - [ ] Users
-- [ ] Tests
+- [ ] [Testing](https://fastapi.tiangolo.com/tutorial/testing/)
+- [ ] search and sort for list endpoints
+- [ ] Create middleware for [Link headers](./backend/Link_Header.md)
 - [ ] Actually save attachments to object storage
-- [ ] Figure out why create_async_engine doesn't work on mac/arm
+- [ ] Figure out database async
+- [ ] Logging
+- [ ] Tracing
+- [ ] Metrics
+- [ ] [OAuth2 scopes](https://fastapi.tiangolo.com/advanced/security/oauth2-scopes/)
+- [ ] [Generate clients](https://fastapi.tiangolo.com/advanced/generate-clients/)
 
 ## Frontend
 

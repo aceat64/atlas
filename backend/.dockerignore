@@ -1,0 +1,11 @@
+# Place any files/paths here if they are included in the repo but should not be in the container image
+
+Dockerfile*
+.dockerignore
+.python-version
+.nvmrc
+**/.mypy_cache/
+**/.ruff_cache/
+**/.venv/
+**/__pycache__/
+settings.localdev.toml
