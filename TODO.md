@@ -10,10 +10,10 @@
   - [ ] Rooms
   - [ ] Stacks
   - [ ] Users
-- [ ] [Testing](https://fastapi.tiangolo.com/tutorial/testing/)
+- [x] [Testing](https://fastapi.tiangolo.com/tutorial/testing/)
 - [ ] search and sort for list endpoints
 - [ ] Create middleware for [Link headers](./backend/Link_Header.md)
-- [ ] Actually save attachments to object storage
+- [x] Actually save attachments to object storage
 - [ ] Figure out database async
 - [ ] Logging
 - [ ] Tracing

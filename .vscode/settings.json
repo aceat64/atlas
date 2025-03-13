@@ -4,6 +4,7 @@
     "**/__pycache__": true,
     "**/.mypy_cache": true,
     "**/.ruff_cache": true,
+    "**/.pytest_cache": true,
     "**/node_modules": true
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
