@@ -1,7 +1,6 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import UUID4
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -30,16 +29,16 @@ def read_tags(
     return TagsPublic(data=tags, count=count)
 
 
-@router.get("/{id}", response_model=TagPublic)
+@router.get("/{tag_id}", response_model=TagPublic)
 def read_tag(
     session: SessionDep,
     user: CurrentUser,
-    id: int,
+    tag_id: int,
 ) -> Any:
     """
     Get tag by ID.
     """
-    tag = session.get(Tag, id)
+    tag = session.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=404, detail="Tag not found")
     return tag
@@ -61,17 +60,17 @@ def create_tag(
     return tag
 
 
-@router.put("/{id}")
+@router.put("/{tag_id}")
 def update_tag(
     session: SessionDep,
     user: CurrentUser,
-    id: UUID4,
+    tag_id: int,
     tag_in: TagBase,
 ) -> Tag:
     """
     Update a tag.
     """
-    tag = session.get(Tag, id)
+    tag = session.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=404, detail="Tag not found")
 
@@ -83,16 +82,16 @@ def update_tag(
     return tag
 
 
-@router.delete("/{id}")
+@router.delete("/{tag_id}")
 def delete_tag(
     session: SessionDep,
     user: CurrentUser,
-    id: int,
+    tag_id: int,
 ) -> Message:
     """
     Delete a tag.
     """
-    tag = session.get(Tag, id)
+    tag = session.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=404, detail="Tag not found")
     session.delete(tag)

@@ -53,7 +53,7 @@ TokenDep = Annotated[TokenPayload, Depends(get_token_payload)]
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:
     try:
-        user = session.exec(select(User).where(User.email == token.email)).one()
+        user: User = session.exec(select(User).where(User.email == token.email)).one()
     except NoResultFound:
         user_create = User(email=token.email, name=token.name, username=token.preferred_username)
         session.add(user_create)

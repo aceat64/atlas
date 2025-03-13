@@ -5,7 +5,7 @@ from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import Message
-from app.models.item import Item, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate
+from app.models.item import Item, ItemCreate, ItemDetail, ItemPublic, ItemsPublic, ItemUpdate
 
 router = APIRouter()
 
@@ -17,28 +17,25 @@ def read_items(
     skip: int = 0,
     limit: Annotated[int, Query(ge=1, le=1000)] = 100,
 ) -> Any:
-    """
-    Retrieve a list of items.
-    """
+    """Retrieve a list of items."""
 
     count_statement = select(func.count()).select_from(Item)
     count = session.exec(count_statement).one()
     statement = select(Item).offset(skip).limit(limit)
-    things = session.exec(statement).all()
+    items = session.exec(statement).all()
 
-    return ItemsPublic(data=things, count=count)
+    return ItemsPublic(data=items, count=count)
 
 
-@router.get("/{id}", response_model=ItemPublic)
+@router.get("/{item_id}", response_model=ItemDetail)
 def read_item(
     session: SessionDep,
     user: CurrentUser,
-    id: int,
+    item_id: int,
 ) -> Any:
-    """
-    Get item by ID.
-    """
-    item = session.get(Item, id)
+    """Get item by ID."""
+
+    item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     return item
@@ -46,9 +43,8 @@ def read_item(
 
 @router.post("/", response_model=ItemPublic)
 def create_item(*, session: SessionDep, user: CurrentUser, item_in: ItemCreate) -> Any:
-    """
-    Create new thing.
-    """
+    """Create new item."""
+
     item = Item.model_validate(item_in)
     session.add(item)
     session.commit()
@@ -56,18 +52,17 @@ def create_item(*, session: SessionDep, user: CurrentUser, item_in: ItemCreate) 
     return item
 
 
-@router.put("/{id}", response_model=ItemPublic)
+@router.put("/{item_id}", response_model=ItemPublic)
 def update_item(
     *,
     session: SessionDep,
     user: CurrentUser,
-    id: int,
+    item_id: int,
     item_in: ItemUpdate,
 ) -> Any:
-    """
-    Update a item.
-    """
-    item = session.get(Item, id)
+    """Update a item."""
+
+    item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
@@ -79,16 +74,15 @@ def update_item(
     return item
 
 
-@router.delete("/{id}")
-def delete_thing(
+@router.delete("/{item_id}")
+def delete_item(
     session: SessionDep,
     user: CurrentUser,
-    id: int,
+    item_id: int,
 ) -> Message:
-    """
-    Delete an item.
-    """
-    item = session.get(Item, id)
+    """Delete an item."""
+
+    item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     session.delete(item)

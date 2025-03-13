@@ -1,15 +1,23 @@
+from typing import TYPE_CHECKING
+
 from sqlmodel import Field, Identity, Relationship, SQLModel
 
-from .item import Item
+if TYPE_CHECKING:
+    from .item import Item
 
 
-class Attachment(SQLModel, table=True):
+class AttachmentBase(SQLModel):
+    item_id: int = Field(default=None, foreign_key="item.id")
+    filename: str
+    content_type: str
+    filesize: int
+    """Size of file in bytes"""
+    checksum_sha256: str | None = None
+    """sha256 checksum of file, calculated prior to uploading"""
+
+
+class Attachment(AttachmentBase, table=True):
     """File attachment, database model, database table inferred from class name"""
 
-    id: int | None = Field(default=None, primary_key=True, sa_column_args=[Identity(always=True)])
-    item_id: int = Field(default=None, foreign_key="item.id")
-    item: Item = Relationship(back_populates="attachments")
-    filename: str
-    mime_type: str
-    filesize: int
-    checksum: str
+    id: int | None = Field(None, primary_key=True, sa_column_args=[Identity(always=True)])
+    item: "Item" = Relationship(back_populates="attachments")

@@ -31,8 +31,7 @@ class TagCreate(TagBase):
 class TagUpdate(TagBase):
     """Properties to receive on tag update"""
 
-    # We are ignoring the typing issues because we need the fields to be optional on update
-    name: str | None = Field(default=None, max_length=255)  # type: ignore
+    name: str | None = None  # type: ignore
 
 
 class Tag(TagBase, table=True):

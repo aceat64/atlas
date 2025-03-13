@@ -6,8 +6,9 @@ from app.models import Status
 api_router = APIRouter()
 api_router.include_router(items.router, prefix="/items", tags=["Items"])
 api_router.include_router(items_tags.router, prefix="/items", tags=["Item Tags"])
-api_router.include_router(attachments.router, prefix="/items", tags=["File Attachments"])
-api_router.include_router(tags.router, prefix="/labels", tags=["Tags"])
+api_router.include_router(attachments.router, prefix="/items", tags=["Item Attachments"])
+
+api_router.include_router(tags.router, prefix="/tags", tags=["Tags"])
 
 
 @api_router.get("/livez", tags=["internal"])

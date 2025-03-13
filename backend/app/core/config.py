@@ -12,11 +12,20 @@ from pydantic_settings import (
 )
 
 
-class CorsSetings(BaseModel):
+class CorsSettings(BaseModel):
     allow_origins: list[str] = ["*"]
     allow_credentials: bool = True
     allow_methods: list[str] = ["*"]
     allow_headers: list[str] = ["*"]
+
+
+class S3Settings(BaseModel):
+    bucket_name: str
+    path_prefix: str = "/"
+    region_name: str | None = None
+    url: AnyHttpUrl | None = None
+    access_key_id: str | None = None
+    secret_access_key: str | None = None
 
 
 class Settings(BaseSettings):
@@ -51,7 +60,8 @@ class Settings(BaseSettings):
         "https://authentik/application/o/atlas/.well-known/openid-configuration"
     )
     """OIDC Discovery URL"""
-    cors: CorsSetings = CorsSetings()
+    cors: CorsSettings = CorsSettings()
+    s3: S3Settings
 
     @field_validator("db_uri")
     def check_db_name(cls, v: PostgresDsn) -> PostgresDsn:

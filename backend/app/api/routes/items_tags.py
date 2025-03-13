@@ -3,13 +3,13 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models.item import Item, ItemPublic
+from app.models.item import Item
 from app.models.tag import Tag
 
 router = APIRouter()
 
 
-@router.put("/{item_id}/tag/{tag_id}", response_model=ItemPublic)
+@router.put("/{item_id}/tag/{tag_id}", response_model=Item)
 def add_tag(
     session: SessionDep,
     user: CurrentUser,
@@ -35,7 +35,7 @@ def add_tag(
     return item
 
 
-@router.delete("/{item_id}/tag/{tag_id}", response_model=ItemPublic)
+@router.delete("/{item_id}/tag/{tag_id}", response_model=Item)
 def remove_tag(
     session: SessionDep,
     user: CurrentUser,

@@ -19,9 +19,7 @@ class UserCreate(UserBase):
 class UserUpdate(UserBase):
     """Properties to receive on user update"""
 
-    # We are ignoring the typing issues because we need the fields to be optional on update
-    name: str | None = Field(default=None, max_length=255)  # type: ignore
-    username: str | None = Field(default=None, max_length=255)  # type: ignore
+    pass
 
 
 class User(UserBase, table=True):

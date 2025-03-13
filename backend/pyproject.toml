@@ -6,6 +6,7 @@ authors = [{ name = "Andrew LeCody" }]
 readme = "DOCS.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aioboto3>=14.1.0",
     "alembic>=1.14.1",
     "fastapi[standard]>=0.115.11,<0.116.0",
     "httpx>=0.28.1",
@@ -18,7 +19,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "coverage>=7.6.12",
     "mypy>=1.15.0",
+    "pytest>=8.3.5",
     "ruff>=0.9.9",
 ]
 

@@ -18,5 +18,9 @@
   "mypy-type-checker.cwd": "${fileDirname}",
   "mypy-type-checker.importStrategy": "fromEnvironment",
   "mypy-type-checker.path": ["uv", "run", "mypy"],
-  "mypy-type-checker.args": ["--strict"]
+  "mypy-type-checker.args": ["--strict"],
+  "python.testing.cwd": "${workspaceFolder}/backend",
+  "python.testing.pytestArgs": ["-v"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }

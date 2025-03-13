@@ -1,12 +1,18 @@
 from importlib.metadata import metadata
 
 from fastapi import FastAPI
+from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
 
 project_metadata = metadata("atlas")
+
+
+def custom_generate_unique_id(route: APIRoute) -> str:
+    return f"{route.tags[0]}-{route.name}".lower()
+
 
 app = FastAPI(
     title="ATLAS",
@@ -19,6 +25,7 @@ app = FastAPI(
         "usePkceWithAuthorizationCodeGrant": True,
         "scopes": "openid profile email",
     },
+    generate_unique_id_function=custom_generate_unique_id,
 )
 
 app.add_middleware(
