@@ -1,7 +1,9 @@
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import func, select
+from fastapi import APIRouter, HTTPException
+from fastapi_pagination.ext.sqlmodel import paginate
+from fastapi_pagination.links import LimitOffsetPage
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import Message
@@ -18,20 +20,10 @@ responses = {
 
 
 @router.get("/", response_model=RoomsPublic)
-def list_rooms(
-    session: SessionDep,
-    user: CurrentUser,
-    skip: int = 0,
-    limit: Annotated[int, Query(ge=1, le=1000)] = 100,
-) -> Any:
+def list_rooms(session: SessionDep, user: CurrentUser) -> LimitOffsetPage[RoomPublic]:
     """Retrieve a list of rooms."""
 
-    count_statement = select(func.count()).select_from(Room)
-    count = session.exec(count_statement).one()
-    statement = select(Room).offset(skip).limit(limit)
-    rooms = session.exec(statement).all()
-
-    return RoomsPublic(data=rooms, count=count)
+    return paginate(session, select(Room))
 
 
 @router.get("/{room_id}", response_model=RoomPublic, responses=responses)
@@ -91,4 +83,4 @@ def delete_room(session: SessionDep, user: CurrentUser, room_id: int) -> Message
 
     session.delete(room)
     session.commit()
-    return Message(message="Room deleted successfully")
+    return Message(detail="Room deleted successfully")

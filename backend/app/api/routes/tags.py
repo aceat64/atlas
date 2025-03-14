@@ -1,7 +1,9 @@
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import func, select
+from fastapi import APIRouter, HTTPException
+from fastapi_pagination.ext.sqlmodel import paginate
+from fastapi_pagination.links import LimitOffsetPage
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import Message
@@ -18,20 +20,10 @@ responses = {
 
 
 @router.get("/", response_model=TagsPublic)
-def list_tags(
-    session: SessionDep,
-    user: CurrentUser,
-    skip: int = 0,
-    limit: Annotated[int, Query(ge=1, le=1000)] = 100,
-) -> Any:
+def list_tags(session: SessionDep, user: CurrentUser) -> LimitOffsetPage[TagPublic]:
     """Retrieve a list of tags."""
 
-    count_statement = select(func.count()).select_from(Tag)
-    count = session.exec(count_statement).one()
-    statement = select(Tag).offset(skip).limit(limit)
-    tags = session.exec(statement).all()
-
-    return TagsPublic(data=tags, count=count)
+    return paginate(session, select(Tag))
 
 
 @router.get("/{tag_id}", response_model=TagPublic, responses=responses)
@@ -91,4 +83,4 @@ def delete_tag(session: SessionDep, user: CurrentUser, tag_id: int) -> Message:
 
     session.delete(tag)
     session.commit()
-    return Message(message="Tag deleted successfully")
+    return Message(detail="Tag deleted successfully")

@@ -1,7 +1,9 @@
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import func, select
+from fastapi import APIRouter, HTTPException
+from fastapi_pagination.ext.sqlmodel import paginate
+from fastapi_pagination.links import LimitOffsetPage
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import Message
@@ -18,20 +20,10 @@ responses = {
 
 
 @router.get("/", response_model=StacksPublic)
-def list_stacks(
-    session: SessionDep,
-    user: CurrentUser,
-    skip: int = 0,
-    limit: Annotated[int, Query(ge=1, le=1000)] = 100,
-) -> Any:
+def list_stacks(session: SessionDep, user: CurrentUser) -> LimitOffsetPage[StackPublic]:
     """Retrieve a list of stacks."""
 
-    count_statement = select(func.count()).select_from(Stack)
-    count = session.exec(count_statement).one()
-    statement = select(Stack).offset(skip).limit(limit)
-    stacks = session.exec(statement).all()
-
-    return StacksPublic(data=stacks, count=count)
+    return paginate(session, select(Stack))
 
 
 @router.get("/{stack_id}", response_model=StackPublic, responses=responses)
@@ -91,4 +83,4 @@ def delete_stack(session: SessionDep, user: CurrentUser, stack_id: int) -> Messa
 
     session.delete(stack)
     session.commit()
-    return Message(message="Stack deleted successfully")
+    return Message(detail="Stack deleted successfully")

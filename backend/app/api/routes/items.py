@@ -1,11 +1,13 @@
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import func, select
+from fastapi import APIRouter, HTTPException
+from fastapi_pagination.ext.sqlmodel import paginate
+from fastapi_pagination.links import LimitOffsetPage
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import Message
-from app.models.item import Item, ItemCreate, ItemDetail, ItemPublic, ItemsPublic, ItemUpdate
+from app.models.item import Item, ItemCreate, ItemDetail, ItemPublic, ItemUpdate
 
 router = APIRouter()
 
@@ -17,21 +19,11 @@ responses = {
 }
 
 
-@router.get("/", response_model=ItemsPublic)
-def list_items(
-    session: SessionDep,
-    user: CurrentUser,
-    skip: int = 0,
-    limit: Annotated[int, Query(ge=1, le=1000)] = 100,
-) -> Any:
+@router.get("/")
+def list_items(session: SessionDep, user: CurrentUser) -> LimitOffsetPage[ItemPublic]:
     """Retrieve a list of items."""
 
-    count_statement = select(func.count()).select_from(Item)
-    count = session.exec(count_statement).one()
-    statement = select(Item).offset(skip).limit(limit)
-    items = session.exec(statement).all()
-
-    return ItemsPublic(data=items, count=count)
+    return paginate(session, select(Item))
 
 
 @router.get("/{item_id}", response_model=ItemDetail, responses=responses)
@@ -93,4 +85,4 @@ def delete_item(session: SessionDep, user: CurrentUser, item_id: int) -> Message
 
     session.delete(item)
     session.commit()
-    return Message(message="Item deleted successfully")
+    return Message(detail="Item deleted successfully")

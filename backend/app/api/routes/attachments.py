@@ -142,4 +142,4 @@ async def delete_attachment(
 
     # File deleted from bucket, so we can delete the db entry
     session.commit()
-    return Message(message="Attachment deleted successfully")
+    return Message(detail="Attachment deleted successfully")

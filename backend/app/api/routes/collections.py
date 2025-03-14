@@ -1,11 +1,13 @@
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import func, select
+from fastapi import APIRouter, HTTPException
+from fastapi_pagination.ext.sqlmodel import paginate
+from fastapi_pagination.links import LimitOffsetPage
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import Message
-from app.models.collection import Collection, CollectionBase, CollectionPublic, CollectionsPublic
+from app.models.collection import Collection, CollectionBase, CollectionPublic
 
 router = APIRouter()
 
@@ -17,21 +19,11 @@ responses = {
 }
 
 
-@router.get("/", response_model=CollectionsPublic)
-def list_collections(
-    session: SessionDep,
-    user: CurrentUser,
-    skip: int = 0,
-    limit: Annotated[int, Query(ge=1, le=1000)] = 100,
-) -> Any:
+@router.get("/")
+def list_collections(session: SessionDep, user: CurrentUser) -> LimitOffsetPage[CollectionPublic]:
     """Retrieve a list of collections."""
 
-    count_statement = select(func.count()).select_from(Collection)
-    count = session.exec(count_statement).one()
-    statement = select(Collection).offset(skip).limit(limit)
-    collections = session.exec(statement).all()
-
-    return CollectionsPublic(data=collections, count=count)
+    return paginate(session, select(Collection))
 
 
 @router.get("/{collection_id}", response_model=CollectionPublic, responses=responses)
@@ -95,4 +87,4 @@ def delete_collection(session: SessionDep, user: CurrentUser, collection_id: int
 
     session.delete(collection)
     session.commit()
-    return Message(message="Collection deleted successfully")
+    return Message(detail="Collection deleted successfully")

@@ -8,6 +8,7 @@ requires-python = ">=3.13"
 dependencies = [
     "aioboto3>=14.1.0",
     "alembic>=1.14.1",
+    "fastapi-pagination>=0.12.34",
     "fastapi[standard]>=0.115.11,<0.116.0",
     "httpx>=0.28.1",
     "psycopg[binary]>=3.2.5",

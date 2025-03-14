@@ -49,7 +49,7 @@ def test_read_items(client: TestClient, db: Session) -> None:
     response = client.get("/items/")
     assert response.status_code == 200
     content = response.json()
-    assert len(content["data"]) >= 2
+    assert len(content["items"]) >= 2
 
 
 def test_update_item(client: TestClient, db: Session) -> None:
@@ -113,7 +113,7 @@ def test_delete_item(client: TestClient, db: Session) -> None:
     response = client.delete(f"/items/{item.id}")
     assert response.status_code == 200
     content = response.json()
-    assert content["message"] == "Item deleted successfully"
+    assert content["detail"] == "Item deleted successfully"
 
 
 def test_delete_item_not_found(client: TestClient) -> None:
