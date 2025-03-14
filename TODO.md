@@ -5,13 +5,14 @@
 
 ## Backend
 
-- [ ] Finish out routes
-  - [ ] Collections
-  - [ ] Rooms
-  - [ ] Stacks
-  - [ ] Users
+- [x] Finish out routes
+  - [x] Collections
+  - [x] Rooms
+  - [x] Stacks
+  - [x] Users
 - [x] [Testing](https://fastapi.tiangolo.com/tutorial/testing/)
 - [ ] search and sort for list endpoints
+- [ ] validate that foreign keys are valid during model_validate
 - [ ] Create middleware for [Link headers](./backend/Link_Header.md)
 - [x] Actually save attachments to object storage
 - [ ] Figure out database async

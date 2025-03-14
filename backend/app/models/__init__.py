@@ -12,7 +12,7 @@ from .user import User  # noqa: F401
 class Message(SQLModel):
     """Generic response message"""
 
-    message: str
+    detail: str
 
 
 class Status(SQLModel):

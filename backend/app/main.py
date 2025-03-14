@@ -1,5 +1,6 @@
 from importlib.metadata import metadata
 
+import humps
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
@@ -11,7 +12,9 @@ project_metadata = metadata("atlas")
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
-    return f"{route.tags[0]}-{route.name}".lower()
+    route_tag = humps.pascalize(str(route.tags[0]))
+    route_name = humps.pascalize(route.name)
+    return f"{route_tag}_{route_name}"
 
 
 app = FastAPI(
@@ -25,6 +28,7 @@ app = FastAPI(
         "usePkceWithAuthorizationCodeGrant": True,
         "scopes": "openid profile email",
     },
+    swagger_ui_parameters={"tryItOutEnabled": True, "persistAuthorization": True},
     generate_unique_id_function=custom_generate_unique_id,
 )
 

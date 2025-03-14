@@ -3,28 +3,32 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models.item import Item
+from app.models import Message
+from app.models.item import Item, ItemPublic
 from app.models.tag import Tag
 
 router = APIRouter()
 
+responses = {
+    404: {
+        "model": Message,
+        "content": {"application/json": {"example": {"detail": "Item not found"}}},
+    }
+}
 
-@router.put("/{item_id}/tag/{tag_id}", response_model=Item)
-def add_tag(
-    session: SessionDep,
-    user: CurrentUser,
-    item_id: int,
-    tag_id: int,
-) -> Any:
-    """
-    Add a tag to an item.
-    """
+@router.post("/{item_id}/tag/{tag_id}", response_model=ItemPublic, responses=responses)
+def add_tag(session: SessionDep, user: CurrentUser, item_id: int, tag_id: int) -> Any:
+    """Add a tag to an item."""
+
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+
     tag = session.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=404, detail="Tag not found")
+
+    # Item already has that tag
     if item.tags.count(tag):
         return item
 
@@ -35,22 +39,19 @@ def add_tag(
     return item
 
 
-@router.delete("/{item_id}/tag/{tag_id}", response_model=Item)
-def remove_tag(
-    session: SessionDep,
-    user: CurrentUser,
-    item_id: int,
-    tag_id: int,
-) -> Any:
-    """
-    Remove a tag from a item.
-    """
+@router.delete("/{item_id}/tag/{tag_id}", response_model=ItemPublic, responses=responses)
+def remove_tag(session: SessionDep, user: CurrentUser, item_id: int, tag_id: int) -> Any:
+    """Remove a tag from a item."""
+
     item: Item | None = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+
     tag = session.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=404, detail="Tag not found")
+
+    # Item doesn't have have that tag, nothing to do
     if not item.tags.count(tag):
         return item
 

@@ -9,9 +9,16 @@ from app.models.item import Item, ItemCreate, ItemDetail, ItemPublic, ItemsPubli
 
 router = APIRouter()
 
+responses = {
+    404: {
+        "model": Message,
+        "content": {"application/json": {"example": {"detail": "Item not found"}}},
+    }
+}
+
 
 @router.get("/", response_model=ItemsPublic)
-def read_items(
+def list_items(
     session: SessionDep,
     user: CurrentUser,
     skip: int = 0,
@@ -27,17 +34,14 @@ def read_items(
     return ItemsPublic(data=items, count=count)
 
 
-@router.get("/{item_id}", response_model=ItemDetail)
-def read_item(
-    session: SessionDep,
-    user: CurrentUser,
-    item_id: int,
-) -> Any:
+@router.get("/{item_id}", response_model=ItemDetail, responses=responses)
+def get_item(session: SessionDep, user: CurrentUser, item_id: int) -> Any:
     """Get item by ID."""
 
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+
     return item
 
 
@@ -52,13 +56,9 @@ def create_item(*, session: SessionDep, user: CurrentUser, item_in: ItemCreate) 
     return item
 
 
-@router.put("/{item_id}", response_model=ItemPublic)
+@router.put("/{item_id}", response_model=ItemPublic, responses=responses)
 def update_item(
-    *,
-    session: SessionDep,
-    user: CurrentUser,
-    item_id: int,
-    item_in: ItemUpdate,
+    *, session: SessionDep, user: CurrentUser, item_id: int, item_in: ItemUpdate
 ) -> Any:
     """Update a item."""
 
@@ -74,17 +74,23 @@ def update_item(
     return item
 
 
-@router.delete("/{item_id}")
-def delete_item(
-    session: SessionDep,
-    user: CurrentUser,
-    item_id: int,
-) -> Message:
+@router.delete(
+    "/{item_id}",
+    responses={
+        **responses,
+        200: {
+            "model": Message,
+            "content": {"application/json": {"example": {"detail": "Item deleted successfully"}}},
+        },
+    },
+)
+def delete_item(session: SessionDep, user: CurrentUser, item_id: int) -> Message:
     """Delete an item."""
 
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+
     session.delete(item)
     session.commit()
     return Message(message="Item deleted successfully")

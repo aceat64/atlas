@@ -20,20 +20,16 @@ s3_chunk_size = hash_chunk_size
 
 @router.post("/{item_id}/attachment")
 async def create_attachment(
-    session: SessionDep,
-    user: CurrentUser,
-    item_id: int,
-    file: UploadFile,
+    session: SessionDep, user: CurrentUser, item_id: int, file: UploadFile
 ) -> Attachment:
-    """
-    Upload and attach a file to a Item
-    """
-    item: Item | None = session.get(Item, item_id)
+    """Upload and attach a file to an item."""
+
+    item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
     attachment = Attachment(
-        item_id=item_id, filename=file.filename, content_type=file.content_type, filesize=file.size
+        item_id=item.id, filename=file.filename, content_type=file.content_type, filesize=file.size
     )
     session.add(attachment)
     session.commit()
@@ -71,6 +67,8 @@ async def create_attachment(
 
 
 async def get_s3_chunk(attachment: Attachment) -> AsyncGenerator[bytes]:
+    """Streaming download of an S3 object."""
+
     # TODO: Move s3 client setup to deps?
     boto_session = aioboto3.Session(
         aws_access_key_id=settings.s3.access_key_id,
@@ -88,14 +86,14 @@ async def get_s3_chunk(attachment: Attachment) -> AsyncGenerator[bytes]:
 
 @router.get("/{item_id}/attachment/{attachment_id}")
 async def get_attachment(
-    session: SessionDep,
-    user: CurrentUser,
-    item_id: int,
-    attachment_id: int,
+    session: SessionDep, user: CurrentUser, item_id: int, attachment_id: int
 ) -> StreamingResponse:
+    """Download an attached file."""
+
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+
     attachment = session.get(Attachment, attachment_id)
     if not attachment:
         raise HTTPException(status_code=404, detail="Attachment not found")
@@ -111,20 +109,19 @@ async def get_attachment(
 
 @router.delete("/{item_id}/attachment/{attachment_id}")
 async def delete_attachment(
-    session: SessionDep,
-    user: CurrentUser,
-    item_id: int,
-    attachment_id: int,
+    session: SessionDep, user: CurrentUser, item_id: int, attachment_id: int
 ) -> Message:
-    """
-    Delete a file attachment.
-    """
+    """Delete a file attachment."""
+
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+
     attachment = session.get(Attachment, attachment_id)
     if not attachment:
         raise HTTPException(status_code=404, detail="Attachment not found")
+
+    # Delete database entry (but don't commit yet)
     session.delete(attachment)
 
     # TODO: Move s3 client setup to deps?
@@ -140,6 +137,7 @@ async def delete_attachment(
                 Key=f"{settings.s3.path_prefix}item_{attachment.item_id}/attachments/{attachment.id}",
             )
         except Exception as exc:
+            # TODO: Test out various failure modes, we may still want to delete the db entry
             raise HTTPException(status_code=500, detail=f"Delete failed: {str(exc)}") from exc
 
     # File deleted from bucket, so we can delete the db entry
