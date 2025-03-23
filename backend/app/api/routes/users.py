@@ -1,21 +1,29 @@
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
 from fastapi_pagination.ext.sqlmodel import paginate
 from fastapi_pagination.links import LimitOffsetPage
-from sqlmodel import select
+from sqlmodel import column, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models.user import User, UserPublic, UsersPublic
+from app.models.user import User, UserPublic
 
 router = APIRouter()
 
 
-@router.get("/", response_model=UsersPublic)
-def list_users(session: SessionDep, user: CurrentUser) -> LimitOffsetPage[UserPublic]:
+@router.get("/")
+def list_users(
+    session: SessionDep,
+    user: CurrentUser,
+    sort: Literal["created_at", "updated_at", "id", "email", "name", "username"] = "created_at",
+    order: Literal["asc", "desc"] = "desc",
+) -> LimitOffsetPage[UserPublic]:
     """Retrieve a list of users."""
 
-    return paginate(session, select(User))
+    statement = select(User).order_by(
+        column(sort).desc() if order == "desc" else column(sort).asc()
+    )
+    return paginate(session, statement)
 
 
 @router.get("/{user_id}", response_model=UserPublic)

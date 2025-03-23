@@ -11,7 +11,15 @@
   - [x] Stacks
   - [x] Users
 - [x] [Testing](https://fastapi.tiangolo.com/tutorial/testing/)
-- [ ] search and sort for list endpoints
+- [x] sort for list endpoints
+- [ ] filter for list endpoinds
+  - [ ] Collections
+  - [x] Items
+  - [ ] Rooms
+  - [ ] Stacks
+  - [ ] Tags
+  - [ ] Users
+- [ ] Item search endpoint
 - [ ] validate that foreign keys are valid during model_validate
 - [x] Create middleware for [Link headers](./backend/Link_Header.md)
 - [x] Actually save attachments to object storage

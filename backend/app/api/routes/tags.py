@@ -1,13 +1,13 @@
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
 from fastapi_pagination.ext.sqlmodel import paginate
 from fastapi_pagination.links import LimitOffsetPage
-from sqlmodel import select
+from sqlmodel import column, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import Message
-from app.models.tag import Tag, TagBase, TagPublic, TagsPublic
+from app.models.tag import Tag, TagBase, TagPublic
 
 router = APIRouter()
 
@@ -19,11 +19,17 @@ responses = {
 }
 
 
-@router.get("/", response_model=TagsPublic)
-def list_tags(session: SessionDep, user: CurrentUser) -> LimitOffsetPage[TagPublic]:
+@router.get("/")
+def list_tags(
+    session: SessionDep,
+    user: CurrentUser,
+    sort: Literal["created_at", "updated_at", "id", "name"] = "created_at",
+    order: Literal["asc", "desc"] = "desc",
+) -> LimitOffsetPage[TagPublic]:
     """Retrieve a list of tags."""
 
-    return paginate(session, select(Tag))
+    statement = select(Tag).order_by(column(sort).desc() if order == "desc" else column(sort).asc())
+    return paginate(session, statement)
 
 
 @router.get("/{tag_id}", response_model=TagPublic, responses=responses)

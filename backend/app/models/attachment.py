@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Identity, Relationship, SQLModel
@@ -20,4 +21,5 @@ class Attachment(AttachmentBase, table=True):
     """File attachment, database model, database table inferred from class name"""
 
     id: int | None = Field(None, primary_key=True, sa_column_args=[Identity(always=True)])
+    created_at: datetime = Field(default_factory=datetime.now)
     item: "Item" = Relationship(back_populates="attachments")

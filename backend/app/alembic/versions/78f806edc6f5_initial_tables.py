@@ -1,8 +1,8 @@
 """initial tables
 
-Revision ID: ac7dc3ef0a29
+Revision ID: 78f806edc6f5
 Revises: 
-Create Date: 2025-03-13 13:41:33.168558
+Create Date: 2025-03-23 15:30:35.188450
 
 """
 # mypy: disallow_untyped_calls=False
@@ -15,7 +15,7 @@ import sqlmodel.sql.sqltypes
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'ac7dc3ef0a29'
+revision: str = '78f806edc6f5'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,18 +28,24 @@ def upgrade() -> None:
     sa.Column('title', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
     sa.Column('annotations', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('id', sa.Integer(), sa.Identity(always=True), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('room',
     sa.Column('title', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
     sa.Column('annotations', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('id', sa.Integer(), sa.Identity(always=True), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('tag',
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
     sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('id', sa.Integer(), sa.Identity(always=True), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user',
@@ -47,6 +53,8 @@ def upgrade() -> None:
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
     sa.Column('username', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
     sa.Column('id', sa.Integer(), sa.Identity(always=True), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('stack',
@@ -54,6 +62,8 @@ def upgrade() -> None:
     sa.Column('room_id', sa.Integer(), nullable=True),
     sa.Column('annotations', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('id', sa.Integer(), sa.Identity(always=True), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['room_id'], ['room.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -66,6 +76,8 @@ def upgrade() -> None:
     sa.Column('slot', sa.Integer(), nullable=True),
     sa.Column('annotations', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('id', sa.Integer(), sa.Identity(always=True), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['collection_id'], ['collection.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['stack_id'], ['stack.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
@@ -77,12 +89,14 @@ def upgrade() -> None:
     sa.Column('filesize', sa.Integer(), nullable=False),
     sa.Column('checksum_sha256', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('id', sa.Integer(), sa.Identity(always=True), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['item_id'], ['item.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('itemtaglink',
     sa.Column('item_id', sa.Integer(), nullable=False),
     sa.Column('tag_id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['item_id'], ['item.id'], ),
     sa.ForeignKeyConstraint(['tag_id'], ['tag.id'], ),
     sa.PrimaryKeyConstraint('item_id', 'tag_id'),

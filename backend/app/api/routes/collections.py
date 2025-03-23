@@ -1,9 +1,9 @@
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
 from fastapi_pagination.ext.sqlmodel import paginate
 from fastapi_pagination.links import LimitOffsetPage
-from sqlmodel import select
+from sqlmodel import column, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import Message
@@ -20,10 +20,18 @@ responses = {
 
 
 @router.get("/")
-def list_collections(session: SessionDep, user: CurrentUser) -> LimitOffsetPage[CollectionPublic]:
+def list_collections(
+    session: SessionDep,
+    user: CurrentUser,
+    sort: Literal["created_at", "updated_at", "title", "id"] = "created_at",
+    order: Literal["asc", "desc"] = "desc",
+) -> LimitOffsetPage[CollectionPublic]:
     """Retrieve a list of collections."""
 
-    return paginate(session, select(Collection))
+    statement = select(Collection).order_by(
+        column(sort).desc() if order == "desc" else column(sort).asc()
+    )
+    return paginate(session, statement)
 
 
 @router.get("/{collection_id}", response_model=CollectionPublic, responses=responses)
