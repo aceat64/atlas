@@ -827,7 +827,7 @@ class OpenIDConnectDiscovery(AuthBaseModel):
                 }
             except Exception as exc:
                 raise OpenIDConnectDiscoveryError(
-                    f"Failed to fetch OpenID Connect discovery document or JWKS: {str(exc)}"
+                    f"Failed to fetch OpenID Connect discovery document or JWKS: {exc}"
                 ) from exc
         return data
 
@@ -873,4 +873,4 @@ class OpenIDConnectDiscovery(AuthBaseModel):
             self.jwks = PyJWKSet.from_dict(jwks_data)
             self.last_updated = datetime.now()
         except Exception as exc:
-            raise OpenIDConnectDiscoveryError(f"Failed to refresh JWKS: {str(exc)}") from exc
+            raise OpenIDConnectDiscoveryError(f"Failed to refresh JWKS: {exc}") from exc

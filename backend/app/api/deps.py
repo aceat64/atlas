@@ -46,7 +46,7 @@ async def get_token_payload(authorization: Annotated[str, Depends(openid_connect
     except (InvalidTokenError, ValidationError) as exc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Could not validate credentials: {str(exc)}",
+            detail=f"Could not validate credentials: {exc}",
         ) from exc
 
 

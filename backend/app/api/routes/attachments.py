@@ -57,7 +57,7 @@ async def create_attachment(
                 ExtraArgs={"ContentType": attachment.content_type},
             )
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"Upload failed: {str(exc)}") from exc
+            raise HTTPException(status_code=500, detail=f"Upload failed: {exc}") from exc
 
     # Update checksum in db now that file has been uploaded
     session.add(attachment)
@@ -139,7 +139,7 @@ async def delete_attachment(
             )
         except Exception as exc:
             # TODO: Test out various failure modes, we may still want to delete the db entry
-            raise HTTPException(status_code=500, detail=f"Delete failed: {str(exc)}") from exc
+            raise HTTPException(status_code=500, detail=f"Delete failed: {exc}") from exc
 
     # File deleted from bucket, so we can delete the db entry
     await session.commit()

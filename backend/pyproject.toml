@@ -64,4 +64,8 @@ select = [
     "ERA",
     # FastAPI
     "FAST",
+    # Ruff-specific rules
+    "RUF",
+    # flake8-async
+    "ASYNC",
 ]
