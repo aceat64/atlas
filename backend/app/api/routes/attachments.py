@@ -28,8 +28,13 @@ async def create_attachment(
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    attachment = Attachment(
-        item_id=item.id, filename=file.filename, content_type=file.content_type, filesize=file.size
+    attachment = Attachment.model_validate(
+        {
+            "item_id": item.id,
+            "filename": file.filename,
+            "content_type": file.content_type,
+            "filesize": file.size,
+        }
     )
     session.add(attachment)
     await session.commit()
@@ -85,7 +90,11 @@ async def get_s3_chunk(attachment: Attachment) -> AsyncGenerator[bytes]:
 
 
 # TODO: Add 200 to responses
-@router.get("/{item_id}/attachment/{attachment_id}", responses=default_responses)
+@router.get(
+    "/{item_id}/attachment/{attachment_id}",
+    responses=default_responses,
+    response_class=StreamingResponse,
+)
 async def get_attachment(
     session: SessionDep, user: CurrentUser, item_id: int, attachment_id: int
 ) -> StreamingResponse:

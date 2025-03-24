@@ -11,18 +11,10 @@
   - [x] Stacks
   - [x] Users
 - [x] [Testing](https://fastapi.tiangolo.com/tutorial/testing/)
-- [x] sort for list endpoints
-- [ ] filter for list endpoinds
-  - [ ] Collections
-  - [x] Items
-  - [ ] Rooms
-  - [ ] Stacks
-  - [ ] Tags
-  - [ ] Users
+- [x] filter for list_items endpoint
+- [x] sort for all list_* endpoints
 - [ ] Item search endpoint
-- [ ] validate that foreign keys are valid during model_validate
-- [ ] Use `RequestValidationError` instead of `HTTPException(status_code=404)` for POST/PUT/DELETE endpoints
-- [x] Create middleware for [Link headers](./backend/Link_Header.md)
+- [ ] Validate foreign keys, ideally using `RequestValidationError` instead of `HTTPException(status_code=404)`
 - [x] Actually save attachments to object storage
 - [x] Figure out database async
 - [ ] Move s3 client setup to deps?

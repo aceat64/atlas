@@ -72,6 +72,7 @@ class Item(ItemBase, table=True):
     attachments: list[Attachment] = Relationship(
         back_populates="item",
         sa_relationship_kwargs={"lazy": "selectin"},
+        cascade_delete=True,
     )
 
 
