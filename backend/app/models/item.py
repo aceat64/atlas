@@ -56,10 +56,23 @@ class Item(ItemBase, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-    collection: Collection | None = Relationship(back_populates="items")
-    stack: Stack | None = Relationship(back_populates="items")
-    tags: list[Tag] = Relationship(back_populates="items", link_model=ItemTagLink)
-    attachments: list[Attachment] = Relationship(back_populates="item")
+    collection: Collection | None = Relationship(
+        back_populates="items",
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
+    stack: Stack | None = Relationship(
+        back_populates="items",
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
+    tags: list[Tag] = Relationship(
+        back_populates="items",
+        link_model=ItemTagLink,
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
+    attachments: list[Attachment] = Relationship(
+        back_populates="item",
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
 
 
 class ItemPublic(ItemBase):

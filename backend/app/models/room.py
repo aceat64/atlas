@@ -37,7 +37,11 @@ class Room(RoomBase, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-    stacks: list["Stack"] = Relationship(back_populates="room", cascade_delete=False)
+    stacks: list["Stack"] = Relationship(
+        back_populates="room",
+        cascade_delete=False,
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
 
     @computed_field
     def stack_count(self) -> int:

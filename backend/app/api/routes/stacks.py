@@ -5,24 +5,18 @@ from fastapi_pagination.ext.sqlmodel import paginate
 from fastapi_pagination.links import LimitOffsetPage
 from sqlmodel import col, column, select
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser, SessionDep, default_responses
 from app.models import Message
 from app.models.room import Room
 from app.models.stack import Stack, StackBase, StackPublic
 
 router = APIRouter()
 
-responses = {
-    404: {
-        "model": Message,
-        "content": {"application/json": {"example": {"detail": "Stack not found"}}},
-    }
-}
 
 @router.get("/")
-def list_stacks(
+async def list_stacks(
     session: SessionDep,
-    user: CurrentUser,
+    current_user: CurrentUser,
     sort: Literal["created_at", "updated_at", "id", "title", "room"] = "created_at",
     order: Literal["asc", "desc"] = "desc",
 ) -> LimitOffsetPage[StackPublic]:
@@ -39,14 +33,15 @@ def list_stacks(
             column(sort).desc() if order == "desc" else column(sort).asc()
         )
 
-    return paginate(session, statement)
+    page: LimitOffsetPage[StackPublic] = await paginate(session, statement)
+    return page
 
 
-@router.get("/{stack_id}", response_model=StackPublic, responses=responses)
-def get_stack(session: SessionDep, user: CurrentUser, stack_id: int) -> Any:
+@router.get("/{stack_id}", response_model=StackPublic, responses=default_responses)
+async def get_stack(session: SessionDep, current_user: CurrentUser, stack_id: int) -> Any:
     """Get stack by ID."""
 
-    stack = session.get(Stack, stack_id)
+    stack = await session.get(Stack, stack_id)
     if not stack:
         raise HTTPException(status_code=404, detail="Stack not found")
 
@@ -54,49 +49,51 @@ def get_stack(session: SessionDep, user: CurrentUser, stack_id: int) -> Any:
 
 
 @router.post("/", response_model=StackPublic)
-def create_stack(session: SessionDep, user: CurrentUser, stack_in: StackBase) -> Any:
+async def create_stack(session: SessionDep, current_user: CurrentUser, stack_in: StackBase) -> Any:
     """Create new stack."""
 
     stack = Stack.model_validate(stack_in)
     session.add(stack)
-    session.commit()
-    session.refresh(stack)
+    await session.commit()
+    await session.refresh(stack)
     return stack
 
 
-@router.put("/{stack_id}", response_model=StackPublic, responses=responses)
-def update_stack(session: SessionDep, user: CurrentUser, stack_id: int, stack_in: StackBase) -> Any:
+@router.put("/{stack_id}", response_model=StackPublic, responses=default_responses)
+async def update_stack(
+    session: SessionDep, current_user: CurrentUser, stack_id: int, stack_in: StackBase
+) -> Any:
     """Update a stack."""
 
-    stack = session.get(Stack, stack_id)
+    stack = await session.get(Stack, stack_id)
     if not stack:
         raise HTTPException(status_code=404, detail="Stack not found")
 
     update_dict = stack_in.model_dump(exclude_unset=True)
     stack.sqlmodel_update(update_dict)
     session.add(stack)
-    session.commit()
-    session.refresh(stack)
+    await session.commit()
+    await session.refresh(stack)
     return stack
 
 
 @router.delete(
     "/{stack_id}",
     responses={
-        **responses,
+        **default_responses,
         200: {
             "model": Message,
             "content": {"application/json": {"example": {"detail": "Stack deleted successfully"}}},
         },
     },
 )
-def delete_stack(session: SessionDep, user: CurrentUser, stack_id: int) -> Message:
+async def delete_stack(session: SessionDep, current_user: CurrentUser, stack_id: int) -> Message:
     """Delete a stack."""
 
-    stack = session.get(Stack, stack_id)
+    stack = await session.get(Stack, stack_id)
     if not stack:
         raise HTTPException(status_code=404, detail="Stack not found")
 
-    session.delete(stack)
-    session.commit()
+    await session.delete(stack)
+    await session.commit()
     return Message(detail="Stack deleted successfully")

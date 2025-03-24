@@ -36,7 +36,11 @@ class Collection(CollectionBase, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-    items: list["Item"] = Relationship(back_populates="collection", cascade_delete=False)
+    items: list["Item"] = Relationship(
+        back_populates="collection",
+        cascade_delete=False,
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
 
 
 class CollectionPublic(CollectionBase):

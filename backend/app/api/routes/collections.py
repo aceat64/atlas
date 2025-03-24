@@ -5,22 +5,15 @@ from fastapi_pagination.ext.sqlmodel import paginate
 from fastapi_pagination.links import LimitOffsetPage
 from sqlmodel import column, select
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser, SessionDep, default_responses
 from app.models import Message
 from app.models.collection import Collection, CollectionBase, CollectionPublic
 
 router = APIRouter()
 
-responses = {
-    404: {
-        "model": Message,
-        "content": {"application/json": {"example": {"detail": "Collection not found"}}},
-    }
-}
-
 
 @router.get("/")
-def list_collections(
+async def list_collections(
     session: SessionDep,
     user: CurrentUser,
     sort: Literal["created_at", "updated_at", "title", "id"] = "created_at",
@@ -31,14 +24,15 @@ def list_collections(
     statement = select(Collection).order_by(
         column(sort).desc() if order == "desc" else column(sort).asc()
     )
-    return paginate(session, statement)
+    page: LimitOffsetPage[CollectionPublic] = await paginate(session, statement)
+    return page
 
 
-@router.get("/{collection_id}", response_model=CollectionPublic, responses=responses)
-def get_collection(session: SessionDep, user: CurrentUser, collection_id: int) -> Any:
+@router.get("/{collection_id}", response_model=CollectionPublic, responses=default_responses)
+async def get_collection(session: SessionDep, user: CurrentUser, collection_id: int) -> Any:
     """Get collection by ID."""
 
-    collection = session.get(Collection, collection_id)
+    collection = await session.get(Collection, collection_id)
     if not collection:
         raise HTTPException(status_code=404, detail="Collection not found")
 
@@ -46,38 +40,40 @@ def get_collection(session: SessionDep, user: CurrentUser, collection_id: int) -
 
 
 @router.post("/", response_model=CollectionPublic)
-def create_collection(session: SessionDep, user: CurrentUser, collection_in: CollectionBase) -> Any:
+async def create_collection(
+    session: SessionDep, user: CurrentUser, collection_in: CollectionBase
+) -> Any:
     """Create new collection."""
 
     collection = Collection.model_validate(collection_in)
     session.add(collection)
-    session.commit()
-    session.refresh(collection)
+    await session.commit()
+    await session.refresh(collection)
     return collection
 
 
-@router.put("/{collection_id}", response_model=CollectionPublic, responses=responses)
-def update_collection(
+@router.put("/{collection_id}", response_model=CollectionPublic, responses=default_responses)
+async def update_collection(
     session: SessionDep, user: CurrentUser, collection_id: int, collection_in: CollectionBase
 ) -> Any:
     """Update a collection."""
 
-    collection = session.get(Collection, collection_id)
+    collection = await session.get(Collection, collection_id)
     if not collection:
         raise HTTPException(status_code=404, detail="Collection not found")
 
     update_dict = collection_in.model_dump(exclude_unset=True)
     collection.sqlmodel_update(update_dict)
     session.add(collection)
-    session.commit()
-    session.refresh(collection)
+    await session.commit()
+    await session.refresh(collection)
     return collection
 
 
 @router.delete(
     "/{collection_id}",
     responses={
-        **responses,
+        **default_responses,
         200: {
             "model": Message,
             "content": {
@@ -86,13 +82,13 @@ def update_collection(
         },
     },
 )
-def delete_collection(session: SessionDep, user: CurrentUser, collection_id: int) -> Message:
+async def delete_collection(session: SessionDep, user: CurrentUser, collection_id: int) -> Message:
     """Delete a collection."""
 
-    collection = session.get(Collection, collection_id)
+    collection = await session.get(Collection, collection_id)
     if not collection:
         raise HTTPException(status_code=404, detail="Collection not found")
 
-    session.delete(collection)
-    session.commit()
+    await session.delete(collection)
+    await session.commit()
     return Message(detail="Collection deleted successfully")

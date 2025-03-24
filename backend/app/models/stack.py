@@ -40,8 +40,15 @@ class Stack(StackBase, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-    room: Room | None = Relationship(back_populates="stacks")
-    items: list["Item"] = Relationship(back_populates="stack", cascade_delete=False)
+    room: Room | None = Relationship(
+        back_populates="stacks",
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
+    items: list["Item"] = Relationship(
+        back_populates="stack",
+        cascade_delete=False,
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
 
     @computed_field
     def item_count(self) -> int:

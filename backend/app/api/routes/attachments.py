@@ -5,7 +5,7 @@ import aioboto3  # type: ignore[import-untyped]
 from fastapi import APIRouter, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser, SessionDep, default_responses
 from app.core.config import settings
 from app.models import Message
 from app.models.attachment import Attachment
@@ -18,13 +18,13 @@ hash_chunk_size = 1024 * 1024  # 1MB chunks
 s3_chunk_size = hash_chunk_size
 
 
-@router.post("/{item_id}/attachment")
+@router.post("/{item_id}/attachment", responses=default_responses)
 async def create_attachment(
     session: SessionDep, user: CurrentUser, item_id: int, file: UploadFile
 ) -> Attachment:
     """Upload and attach a file to an item."""
 
-    item = session.get(Item, item_id)
+    item = await session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
@@ -32,8 +32,8 @@ async def create_attachment(
         item_id=item.id, filename=file.filename, content_type=file.content_type, filesize=file.size
     )
     session.add(attachment)
-    session.commit()
-    session.refresh(attachment)
+    await session.commit()
+    await session.refresh(attachment)
 
     # Calculate sha256sum of the file in chucks so we don't have to load it all into memory
     hash_obj = hashlib.sha256()
@@ -61,8 +61,8 @@ async def create_attachment(
 
     # Update checksum in db now that file has been uploaded
     session.add(attachment)
-    session.commit()
-    session.refresh(attachment)
+    await session.commit()
+    await session.refresh(attachment)
     return attachment
 
 
@@ -84,17 +84,18 @@ async def get_s3_chunk(attachment: Attachment) -> AsyncGenerator[bytes]:
             yield await stream.read()
 
 
-@router.get("/{item_id}/attachment/{attachment_id}")
+# TODO: Add 200 to responses
+@router.get("/{item_id}/attachment/{attachment_id}", responses=default_responses)
 async def get_attachment(
     session: SessionDep, user: CurrentUser, item_id: int, attachment_id: int
 ) -> StreamingResponse:
     """Download an attached file."""
 
-    item = session.get(Item, item_id)
+    item = await session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    attachment = session.get(Attachment, attachment_id)
+    attachment = await session.get(Attachment, attachment_id)
     if not attachment:
         raise HTTPException(status_code=404, detail="Attachment not found")
 
@@ -107,22 +108,22 @@ async def get_attachment(
     )
 
 
-@router.delete("/{item_id}/attachment/{attachment_id}")
+@router.delete("/{item_id}/attachment/{attachment_id}", responses=default_responses)
 async def delete_attachment(
     session: SessionDep, user: CurrentUser, item_id: int, attachment_id: int
 ) -> Message:
     """Delete a file attachment."""
 
-    item = session.get(Item, item_id)
+    item = await session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    attachment = session.get(Attachment, attachment_id)
+    attachment = await session.get(Attachment, attachment_id)
     if not attachment:
         raise HTTPException(status_code=404, detail="Attachment not found")
 
     # Delete database entry (but don't commit yet)
-    session.delete(attachment)
+    await session.delete(attachment)
 
     # TODO: Move s3 client setup to deps?
     boto_session = aioboto3.Session(
@@ -141,5 +142,5 @@ async def delete_attachment(
             raise HTTPException(status_code=500, detail=f"Delete failed: {str(exc)}") from exc
 
     # File deleted from bucket, so we can delete the db entry
-    session.commit()
+    await session.commit()
     return Message(detail="Attachment deleted successfully")

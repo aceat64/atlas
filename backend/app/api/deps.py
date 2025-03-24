@@ -1,5 +1,5 @@
-from collections.abc import Generator
-from typing import Annotated
+from collections.abc import AsyncGenerator
+from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OpenIdConnect
@@ -7,28 +7,31 @@ from fastapi.security.utils import get_authorization_scheme_param
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlalchemy.exc import NoResultFound
-from sqlmodel import Session, select
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth.oidc import OpenIDConnectDiscovery, TokenPayload
 from app.core.config import settings
-from app.core.db import engine
+from app.core.db import async_engine
+from app.models import Message
 from app.models.user import User
 
+default_responses: dict[int | str, dict[str, Any]] = {404: {"model": Message}}
 
-def get_db() -> Generator[Session]:
-    """Get a database session instance"""
-    with Session(engine) as session:
+
+async def get_db() -> AsyncGenerator[AsyncSession]:
+    async with AsyncSession(async_engine) as session:
         yield session
 
 
-SessionDep = Annotated[Session, Depends(get_db)]
+SessionDep = Annotated[AsyncSession, Depends(get_db)]
 """Get a database session instance"""
 
 openid_connect = OpenIdConnect(openIdConnectUrl=str(settings.oidc_url), auto_error=False)
 openid_provider = OpenIDConnectDiscovery(settings.oidc_url)
 
 
-def get_token_payload(authorization: Annotated[str, Depends(openid_connect)]) -> TokenPayload:
+async def get_token_payload(authorization: Annotated[str, Depends(openid_connect)]) -> TokenPayload:
     try:
         scheme, token = get_authorization_scheme_param(authorization)
         if scheme.lower() != "bearer":
@@ -51,14 +54,15 @@ TokenDep = Annotated[TokenPayload, Depends(get_token_payload)]
 """Get the validated access token payload for the request"""
 
 
-def get_current_user(session: SessionDep, token: TokenDep) -> User:
+async def get_current_user(session: SessionDep, token: TokenDep) -> User:
     try:
-        user: User = session.exec(select(User).where(User.email == token.email)).one()
+        result = await session.exec(select(User).where(User.email == token.email))
+        user = result.one()
     except NoResultFound:
         user_create = User(email=token.email, name=token.name, username=token.preferred_username)
         session.add(user_create)
-        session.commit()
-        session.refresh(user_create)
+        await session.commit()
+        await session.refresh(user_create)
         return User.model_validate(user_create)
     return user
 

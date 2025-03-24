@@ -21,9 +21,11 @@
   - [ ] Users
 - [ ] Item search endpoint
 - [ ] validate that foreign keys are valid during model_validate
+- [ ] Use `RequestValidationError` instead of `HTTPException(status_code=404)` for POST/PUT/DELETE endpoints
 - [x] Create middleware for [Link headers](./backend/Link_Header.md)
 - [x] Actually save attachments to object storage
-- [ ] Figure out database async
+- [x] Figure out database async
+- [ ] Move s3 client setup to deps?
 - [ ] Logging
 - [ ] Tracing
 - [ ] Metrics

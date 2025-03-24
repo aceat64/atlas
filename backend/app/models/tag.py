@@ -11,9 +11,9 @@ if TYPE_CHECKING:
 class ItemTagLink(SQLModel, table=True):
     """Linking table (many-to-many) for Item and Tag"""
 
-    __table_args__ = (UniqueConstraint("item_id", "tag_id"),)
-    item_id: int = Field(default=None, foreign_key="item.id", primary_key=True)
-    tag_id: int = Field(default=None, foreign_key="tag.id", primary_key=True)
+    __table_args__ = (UniqueConstraint("item_id", "tag_id", name="uix_item_tag"),)
+    item_id: int = Field(foreign_key="item.id", primary_key=True)
+    tag_id: int = Field(foreign_key="tag.id", primary_key=True)
     created_at: datetime = Field(default_factory=datetime.now)
 
 
@@ -44,7 +44,11 @@ class Tag(TagBase, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-    items: list["Item"] = Relationship(back_populates="tags", link_model=ItemTagLink)
+    items: list["Item"] = Relationship(
+        back_populates="tags",
+        link_model=ItemTagLink,
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
 
     @computed_field
     def item_count(self) -> int:

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "All-media Tracking & Library Access System"
 authors = [{ name = "Andrew LeCody" }]
 readme = "DOCS.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "aioboto3>=14.1.0",
     "alembic>=1.14.1",

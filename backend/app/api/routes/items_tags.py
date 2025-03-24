@@ -2,29 +2,22 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from app.api.deps import CurrentUser, SessionDep
-from app.models import Message
+from app.api.deps import CurrentUser, SessionDep, default_responses
 from app.models.item import Item, ItemPublic
 from app.models.tag import Tag
 
 router = APIRouter()
 
-responses = {
-    404: {
-        "model": Message,
-        "content": {"application/json": {"example": {"detail": "Item not found"}}},
-    }
-}
 
-@router.post("/{item_id}/tag/{tag_id}", response_model=ItemPublic, responses=responses)
-def add_tag(session: SessionDep, user: CurrentUser, item_id: int, tag_id: int) -> Any:
+@router.post("/{item_id}/tag/{tag_id}", response_model=ItemPublic, responses=default_responses)
+async def add_tag(session: SessionDep, user: CurrentUser, item_id: int, tag_id: int) -> Any:
     """Add a tag to an item."""
 
-    item = session.get(Item, item_id)
+    item = await session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    tag = session.get(Tag, tag_id)
+    tag = await session.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=404, detail="Tag not found")
 
@@ -34,20 +27,20 @@ def add_tag(session: SessionDep, user: CurrentUser, item_id: int, tag_id: int) -
 
     item.tags.append(tag)
     session.add(item)
-    session.commit()
-    session.refresh(item)
+    await session.commit()
+    await session.refresh(item)
     return item
 
 
-@router.delete("/{item_id}/tag/{tag_id}", response_model=ItemPublic, responses=responses)
-def remove_tag(session: SessionDep, user: CurrentUser, item_id: int, tag_id: int) -> Any:
+@router.delete("/{item_id}/tag/{tag_id}", response_model=ItemPublic, responses=default_responses)
+async def remove_tag(session: SessionDep, user: CurrentUser, item_id: int, tag_id: int) -> Any:
     """Remove a tag from a item."""
 
-    item: Item | None = session.get(Item, item_id)
+    item: Item | None = await session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    tag = session.get(Tag, tag_id)
+    tag = await session.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=404, detail="Tag not found")
 
@@ -57,6 +50,6 @@ def remove_tag(session: SessionDep, user: CurrentUser, item_id: int, tag_id: int
 
     item.tags.remove(tag)
     session.add(item)
-    session.commit()
-    session.refresh(item)
+    await session.commit()
+    await session.refresh(item)
     return item

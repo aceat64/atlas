@@ -22,4 +22,7 @@ class Attachment(AttachmentBase, table=True):
 
     id: int | None = Field(None, primary_key=True, sa_column_args=[Identity(always=True)])
     created_at: datetime = Field(default_factory=datetime.now)
-    item: "Item" = Relationship(back_populates="attachments")
+    item: "Item" = Relationship(
+        back_populates="attachments",
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
