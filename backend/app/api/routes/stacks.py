@@ -8,7 +8,7 @@ from sqlmodel import col, column, select
 from app.api.deps import CurrentUser, SessionDep, default_responses
 from app.models import Message
 from app.models.room import Room
-from app.models.stack import Stack, StackBase, StackPublic
+from app.models.stack import Stack, StackCreate, StackPublic, StackUpdate
 
 router = APIRouter()
 
@@ -49,7 +49,9 @@ async def get_stack(session: SessionDep, current_user: CurrentUser, stack_id: in
 
 
 @router.post("/", response_model=StackPublic)
-async def create_stack(session: SessionDep, current_user: CurrentUser, stack_in: StackBase) -> Any:
+async def create_stack(
+    session: SessionDep, current_user: CurrentUser, stack_in: StackCreate
+) -> Any:
     """Create new stack."""
 
     stack = Stack.model_validate(stack_in)
@@ -61,7 +63,7 @@ async def create_stack(session: SessionDep, current_user: CurrentUser, stack_in:
 
 @router.put("/{stack_id}", response_model=StackPublic, responses=default_responses)
 async def update_stack(
-    session: SessionDep, current_user: CurrentUser, stack_id: int, stack_in: StackBase
+    session: SessionDep, current_user: CurrentUser, stack_id: int, stack_in: StackUpdate
 ) -> Any:
     """Update a stack."""
 

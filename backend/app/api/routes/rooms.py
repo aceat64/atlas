@@ -7,7 +7,7 @@ from sqlmodel import column, select
 
 from app.api.deps import CurrentUser, SessionDep, default_responses
 from app.models import Message
-from app.models.room import Room, RoomBase, RoomPublic
+from app.models.room import Room, RoomCreate, RoomPublic, RoomUpdate
 
 router = APIRouter()
 
@@ -41,7 +41,7 @@ async def get_room(session: SessionDep, current_user: CurrentUser, room_id: int)
 
 
 @router.post("/", response_model=RoomPublic)
-async def create_room(session: SessionDep, current_user: CurrentUser, room_in: RoomBase) -> Any:
+async def create_room(session: SessionDep, current_user: CurrentUser, room_in: RoomCreate) -> Any:
     """Create new room."""
 
     room = Room.model_validate(room_in)
@@ -53,7 +53,7 @@ async def create_room(session: SessionDep, current_user: CurrentUser, room_in: R
 
 @router.put("/{room_id}", response_model=RoomPublic, responses=default_responses)
 async def update_room(
-    session: SessionDep, current_user: CurrentUser, room_id: int, room_in: RoomBase
+    session: SessionDep, current_user: CurrentUser, room_id: int, room_in: RoomUpdate
 ) -> Any:
     """Update a room."""
 

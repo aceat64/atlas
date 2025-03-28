@@ -1,5 +1,6 @@
 import hashlib
 from collections.abc import AsyncGenerator
+from typing import Any
 
 import aioboto3  # type: ignore[import-untyped]
 from fastapi import APIRouter, HTTPException, UploadFile
@@ -8,7 +9,7 @@ from fastapi.responses import StreamingResponse
 from app.api.deps import CurrentUser, SessionDep, default_responses
 from app.core.config import settings
 from app.models import Message
-from app.models.attachment import Attachment
+from app.models.attachment import Attachment, AttachmentPublic
 from app.models.item import Item
 from app.utils import content_disposition_header
 
@@ -18,10 +19,10 @@ hash_chunk_size = 1024 * 1024  # 1MB chunks
 s3_chunk_size = hash_chunk_size
 
 
-@router.post("/{item_id}/attachment", responses=default_responses)
+@router.post("/{item_id}/attachment", responses=default_responses, response_model=AttachmentPublic)
 async def create_attachment(
     session: SessionDep, user: CurrentUser, item_id: int, file: UploadFile
-) -> Attachment:
+) -> Any:
     """Upload and attach a file to an item."""
 
     item = await session.get(Item, item_id)

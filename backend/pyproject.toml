@@ -39,11 +39,10 @@ packages = ["app"]
 
 [tool.mypy]
 strict = true
-exclude = ["venv", ".venv", "alembic"]
+exclude = ["venv", ".venv"]
 plugins = ["pydantic.mypy"]
 
 [tool.ruff]
-exclude = ["alembic"]
 line-length = 100
 
 [tool.ruff.lint]

@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel
 
+# We must import our table models here so that Alembic's autogenerate works.
 from .attachment import Attachment  # noqa: F401
 from .collection import Collection  # noqa: F401
 from .item import Item  # noqa: F401

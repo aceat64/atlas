@@ -7,7 +7,7 @@ from sqlmodel import column, select
 
 from app.api.deps import CurrentUser, SessionDep, default_responses
 from app.models import Message
-from app.models.collection import Collection, CollectionBase, CollectionPublic
+from app.models.collection import Collection, CollectionCreate, CollectionPublic, CollectionUpdate
 
 router = APIRouter()
 
@@ -41,7 +41,7 @@ async def get_collection(session: SessionDep, user: CurrentUser, collection_id: 
 
 @router.post("/", response_model=CollectionPublic)
 async def create_collection(
-    session: SessionDep, user: CurrentUser, collection_in: CollectionBase
+    session: SessionDep, user: CurrentUser, collection_in: CollectionCreate
 ) -> Any:
     """Create new collection."""
 
@@ -54,7 +54,7 @@ async def create_collection(
 
 @router.put("/{collection_id}", response_model=CollectionPublic, responses=default_responses)
 async def update_collection(
-    session: SessionDep, user: CurrentUser, collection_id: int, collection_in: CollectionBase
+    session: SessionDep, user: CurrentUser, collection_id: int, collection_in: CollectionUpdate
 ) -> Any:
     """Update a collection."""
 

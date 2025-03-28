@@ -9,14 +9,7 @@ from sqlmodel import col, column, exists, select
 from app.api.deps import CurrentUser, SessionDep, default_responses
 from app.models import Message
 from app.models.collection import Collection
-from app.models.item import (
-    Item,
-    ItemCreate,
-    ItemDetail,
-    ItemPublic,
-    ItemType,
-    ItemUpdate,
-)
+from app.models.item import Item, ItemCreate, ItemPublic, ItemType, ItemUpdate
 from app.models.stack import Stack
 from app.models.tag import ItemTagLink
 
@@ -101,7 +94,7 @@ async def list_items(
     return page
 
 
-@router.get("/{item_id}", response_model=ItemDetail, responses=default_responses)
+@router.get("/{item_id}", response_model=ItemPublic, responses=default_responses)
 async def get_item(session: SessionDep, current_user: CurrentUser, item_id: int) -> Any:
     """Get item by ID."""
 

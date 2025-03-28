@@ -7,7 +7,7 @@ from sqlmodel import column, select
 
 from app.api.deps import CurrentUser, SessionDep, default_responses
 from app.models import Message
-from app.models.tag import Tag, TagBase, TagPublic
+from app.models.tag import Tag, TagCreate, TagPublic, TagUpdate
 
 router = APIRouter()
 
@@ -38,7 +38,7 @@ async def get_tag(session: SessionDep, current_user: CurrentUser, tag_id: int) -
 
 
 @router.post("/", response_model=TagPublic)
-async def create_tag(session: SessionDep, current_user: CurrentUser, tag_in: TagBase) -> Any:
+async def create_tag(session: SessionDep, current_user: CurrentUser, tag_in: TagCreate) -> Any:
     """Create new tag."""
 
     tag = Tag.model_validate(tag_in)
@@ -50,7 +50,7 @@ async def create_tag(session: SessionDep, current_user: CurrentUser, tag_in: Tag
 
 @router.put("/{tag_id}", response_model=TagPublic, responses=default_responses)
 async def update_tag(
-    session: SessionDep, current_user: CurrentUser, tag_id: int, tag_in: TagBase
+    session: SessionDep, current_user: CurrentUser, tag_id: int, tag_in: TagUpdate
 ) -> Any:
     """Update a tag."""
 
