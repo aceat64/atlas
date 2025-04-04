@@ -28,7 +28,7 @@ dev = [
 ]
 
 [project.scripts]
-atlas-cli = "cli:run"
+atlas-cli = "cli.main:app"
 
 [build-system]
 requires = ["hatchling"]
