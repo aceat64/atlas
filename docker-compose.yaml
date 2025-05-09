@@ -1,6 +1,33 @@
 name: ATLAS
 
 services:
+  atlas:
+    build:
+      context: ./backend/
+    depends_on:
+      - postgres
+      - minio
+      - grafana
+    environment:
+      OTEL_SERVICE_NAME: atlas
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana:4317
+    profiles:
+      - atlas
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/settings.localdev.toml:/config/settings.toml
+
+  grafana:
+    image: grafana/otel-lgtm
+    restart: always
+    ports:
+      - "3000:3000"
+      - "4317:4317"
+      - "4318:4318"
+
   postgres:
     image: postgres:latest
     restart: always

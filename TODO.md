@@ -18,7 +18,7 @@
 - [x] Actually save attachments to object storage
 - [x] Figure out database async
 - [ ] Move s3 client setup to deps?
-- [ ] Logging
+- [x] Logging
 - [ ] Tracing
 - [ ] Metrics
 - [ ] [OAuth2 scopes](https://fastapi.tiangolo.com/advanced/security/oauth2-scopes/)
@@ -29,3 +29,10 @@
 ## Frontend
 
 - [ ] Start
+
+## CI/CD
+
+- [ ] lint workflow, with annotations and summaries
+  - [ ] mypy
+  - [ ] ruff (with `--output-format=github`)
+- [ ] test workflow, with annotations and summaries

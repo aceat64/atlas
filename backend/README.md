@@ -84,3 +84,10 @@ Table attachment {
 ```
 
 _<https://dbdiagram.io/d/Library-67c4adb2263d6cf9a0f57ed3>_
+
+## Observability
+
+```shell
+uv add opentelemetry-distro opentelemetry-exporter-otlp
+opentelemetry-bootstrap | xargs uv add
+```

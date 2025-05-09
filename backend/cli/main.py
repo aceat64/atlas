@@ -1,6 +1,5 @@
 # This is just an example/test for providing a CLI
 # With some work it could be used as the entrypoint for the container...
-from enum import Enum
 from importlib.metadata import metadata
 from typing import Annotated
 
@@ -11,16 +10,6 @@ from rich import print, print_json
 project_metadata = metadata("atlas")
 
 app = typer.Typer(no_args_is_help=True, help=project_metadata["Summary"])
-
-
-class LogLevel(str, Enum):
-    critical = "critical"
-    error = "error"
-    warning = "warning"
-    info = "info"
-    debug = "debug"
-    trace = "trace"
-
 
 def version_callback(value: bool) -> None:
     if value:
@@ -34,11 +23,13 @@ def serve(
     port: Annotated[
         int, typer.Option(help="Bind socket to this port. If 0, an available port will be picked.")
     ] = 8000,
-    log_level: Annotated[LogLevel, typer.Option()] = LogLevel.info,
 ) -> None:
-    from app.main import app
-
-    uvicorn.run(app, host=host, port=port, log_level=log_level)
+    uvicorn.run(
+        "app.main:app",
+        host=host,
+        port=port,
+        forwarded_allow_ips="*",
+    )
 
 
 @app.command(help="Update database to latest schema.")

@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator
 from typing import Annotated, Any
 
+import structlog
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OpenIdConnect
 from fastapi.security.utils import get_authorization_scheme_param
@@ -64,6 +65,8 @@ async def get_current_user(session: SessionDep, token: TokenDep) -> User:
         await session.commit()
         await session.refresh(user_create)
         return User.model_validate(user_create)
+
+    structlog.contextvars.bind_contextvars(user_id=user.id)
     return user
 
 

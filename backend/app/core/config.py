@@ -1,6 +1,9 @@
+from typing import Annotated, Literal
+
 from pydantic import (
     AnyHttpUrl,
     BaseModel,
+    BeforeValidator,
     Field,
     PostgresDsn,
     field_validator,
@@ -11,6 +14,18 @@ from pydantic_settings import (
     SettingsConfigDict,
     TomlConfigSettingsSource,
 )
+
+
+class LogSettings(BaseModel):
+    format: Literal["json", "logfmt", "console"] = "console"
+    level: Annotated[
+        Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], BeforeValidator(str.upper)
+    ] = "INFO"
+    access_log: bool = Field(True, description="Enable/Disable access log")
+
+    @property
+    def tracebacks(self) -> bool:
+        return self.level == "DEBUG"
 
 
 class CorsSettings(BaseModel):
@@ -90,6 +105,7 @@ class Settings(BaseSettings):
         examples=["https://authentik/application/o/atlas/.well-known/openid-configuration"],
     )
 
+    log: LogSettings = LogSettings()
     cors: CorsSettings = CorsSettings()
     s3: S3Settings
 

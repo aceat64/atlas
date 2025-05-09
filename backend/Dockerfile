@@ -17,7 +17,7 @@ ENV UV_COMPILE_BYTECODE=1
 
 WORKDIR /app
 
-# Install dependencies, temporarilly mounting pyproject.toml and uv.lock
+# Install dependencies, temporarily mounting pyproject.toml and uv.lock
 RUN --mount=type=cache,target=/root/.cache/uv \
   --mount=type=bind,source=uv.lock,target=uv.lock \
   --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
@@ -59,22 +59,18 @@ ARG APP_VERSION
 ARG GIT_COMMIT
 
 ENV \
-  UVICORN_HOST=0.0.0.0 \
-  UVICORN_PORT=8080 \
-  UVICORN_APP=app.main:app \
-  # UVICORN_LOG_CONFIG=/app/logging.yaml \
-  # Trust proxy headers such as `X-Forwarded-For`, the default is to only trust headers from 127.0.0.1
-  FORWARDED_ALLOW_IPS="*" \
   # The OTEL_RESOURCE_ATTRIBUTES environment variable allows resource attributes to be passed to the SDK at process invocation.
   # ref: https://opentelemetry-python.readthedocs.io/en/latest/sdk/environment_variables.html#opentelemetry.sdk.environment_variables.OTEL_RESOURCE_ATTRIBUTES
-  OTEL_RESOURCE_ATTRIBUTES="service.version=${APP_VERSION:-unknown},service.git.commit=${GIT_COMMIT:-unknown}}" \
+  OTEL_RESOURCE_ATTRIBUTES="service.version=${APP_VERSION:-unknown},service.git.commit=${GIT_COMMIT:-unknown}" \
   # Immediately write to stdout and stderr instead of buffering the output
   PYTHONUNBUFFERED=1 \
   # Add the app venv to $PATH
   PATH="/app/.venv/bin:${PATH}"
 
 # The command that will be run:
-ENTRYPOINT ["uvicorn"]
+ENTRYPOINT ["atlas-cli"]
+# Default arguments if none are given:
+CMD ["serve"]
 
 
 ### Container Image Metadata
