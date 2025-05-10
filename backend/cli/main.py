@@ -11,6 +11,7 @@ project_metadata = metadata("atlas")
 
 app = typer.Typer(no_args_is_help=True, help=project_metadata["Summary"])
 
+
 def version_callback(value: bool) -> None:
     if value:
         print(f"ATLAS {project_metadata['Version']}")

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query
-from fastapi_pagination.ext.sqlmodel import paginate
+from fastapi_pagination.ext.sqlmodel import apaginate
 from fastapi_pagination.links import LimitOffsetPage
 from sqlmodel import col, column, exists, select
 
@@ -90,7 +90,8 @@ async def list_items(
     if stack_id:
         statement = statement.where(col(Item.stack_id) == stack_id)
 
-    page: LimitOffsetPage[ItemPublic] = await paginate(session, statement)
+    page: LimitOffsetPage[ItemPublic] = await apaginate(session, statement)  # type: ignore[arg-type]
+    # It feels wrong to ignore the incompatible arg-type
     return page
 
 

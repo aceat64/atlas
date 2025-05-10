@@ -37,6 +37,7 @@ dependencies = [
     "opentelemetry-instrumentation-urllib3==0.53b1",
     "opentelemetry-instrumentation-wsgi==0.53b1",
     "psycopg[binary]>=3.2.5",
+    "pydantic>=2.11.4",
     "pydantic-settings>=2.8.1",
     "pyhumps>=3.8.0",
     "pyjwt[crypto]>=2.10.1",
@@ -67,6 +68,7 @@ packages = ["app"]
 strict = true
 exclude = ["venv", ".venv"]
 plugins = ["pydantic.mypy"]
+enable_error_code = ["deprecated", "unreachable", "no-any-unimported", "redundant-self"]
 
 [tool.ruff]
 line-length = 100

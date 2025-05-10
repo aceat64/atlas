@@ -4,20 +4,26 @@
 
   // List of extensions which should be recommended for users of this workspace.
   "recommendations": [
-    "charliermarsh.ruff",
-    "ms-python.mypy-type-checker",
     "aaron-bond.better-comments",
+    "charliermarsh.ruff",
+    "davidanson.vscode-markdownlint",
     "dbaeumer.vscode-eslint",
-    "tamasfe.even-better-toml",
     "esbenp.prettier-vscode",
-    "timonwong.shellcheck",
-    "redhat.vscode-yaml"
+    "exiasr.hadolint",
+    "ms-python.debugpy",
+    "ms-python.mypy-type-checker",
+    "ms-python.python",
+    "naumovs.color-highlight",
+    "redhat.vscode-yaml",
+    "streetsidesoftware.code-spell-checker",
+    "tamasfe.even-better-toml",
+    "timonwong.shellcheck"
   ],
   // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
   "unwantedRecommendations": [
     "ms-python.black-formatter",
+    "ms-python.flake8",
     "ms-python.isort",
-    "ms-python.pylint",
-    "ms-python.flake8"
+    "ms-python.pylint"
   ]
 }

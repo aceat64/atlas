@@ -1,7 +1,7 @@
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
-from fastapi_pagination.ext.sqlmodel import paginate
+from fastapi_pagination.ext.sqlmodel import apaginate
 from fastapi_pagination.links import LimitOffsetPage
 from sqlmodel import col, column, select
 
@@ -33,7 +33,8 @@ async def list_stacks(
             column(sort).desc() if order == "desc" else column(sort).asc()
         )
 
-    page: LimitOffsetPage[StackPublic] = await paginate(session, statement)
+    page: LimitOffsetPage[StackPublic] = await apaginate(session, statement)  # type: ignore[arg-type]
+    # It feels wrong to ignore the incompatible arg-type
     return page
 
 

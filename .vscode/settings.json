@@ -10,20 +10,18 @@
     "**/node_modules": true
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnPaste": true,
-  "editor.formatOnSave": true,
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
   "[python]": {
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
   "mypy-type-checker.cwd": "${nearestConfig}",
   "mypy-type-checker.importStrategy": "fromEnvironment",
-  "mypy-type-checker.path": ["uv", "run", "mypy"],
-  "mypy-type-checker.args": ["--strict"],
+  "mypy-type-checker.preferDaemon": true,
+  "mypy-type-checker.reportingScope": "workspace",
   "python.testing.cwd": "${workspaceFolder}/backend",
   "python.testing.pytestArgs": ["-v"],
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true
+  "python.testing.pytestEnabled": true,
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python"
 }
