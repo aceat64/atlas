@@ -1,12 +1,14 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
 from pydantic import (
     AnyHttpUrl,
+    AnyUrl,
     BaseModel,
     BeforeValidator,
     Field,
     PostgresDsn,
     field_validator,
+    model_validator,
 )
 from pydantic_settings import (
     BaseSettings,
@@ -28,6 +30,15 @@ class LogSettings(BaseModel):
         return self.level == "DEBUG"
 
 
+class TelemetrySettings(BaseModel):
+    endpoint: AnyUrl | None = Field(
+        None,
+        examples=["http://localhost:4318/v1/traces"],
+        description="OTLP endpoint",
+    )
+    console: bool = Field(False, description="Output traces/spans to the console.")
+
+
 class CorsSettings(BaseModel):
     """Cross-Origin Resource Sharing (CORS)"""
 
@@ -47,7 +58,7 @@ class S3Settings(BaseModel):
         examples=["us-east-2"],
         description="If not set, AWS SDK auto-discovery will be used (envvar `AWS_REGION`).",
     )
-    url: AnyHttpUrl | None = Field(
+    endpoint: AnyHttpUrl | None = Field(
         None,
         examples=["http://localhost:9000"],
         description="If not set, AWS SDK auto-discovery will be used (envvar `AWS_ENDPOINT_URL_S3`).",  # noqa: E501
@@ -60,6 +71,17 @@ class S3Settings(BaseModel):
         None,
         description="If not set, AWS SDK auto-discovery will be used (envvar `AWS_SECRET_ACCESS_KEY`).",  # noqa: E501
     )
+    allow_http: bool = Field(False, description="Allow connecting over HTTP.")
+    allow_invalid_certificates: bool = Field(
+        False, description="Allow invalid/untrusted certificates."
+    )
+
+    @model_validator(mode="after")
+    def check_endpoint_http(self) -> Self:
+        """Require HTTPS if allow_http is False"""
+        if self.endpoint and self.endpoint.scheme == "http" and not self.allow_http:
+            raise ValueError("s3.endpoint must be HTTPS unless s3.allow_http is True")
+        return self
 
 
 class Settings(BaseSettings):
@@ -107,6 +129,7 @@ class Settings(BaseSettings):
 
     log: LogSettings = LogSettings()
     cors: CorsSettings = CorsSettings()
+    telemetry: TelemetrySettings = TelemetrySettings()
     s3: S3Settings
 
     @field_validator("db_uri")

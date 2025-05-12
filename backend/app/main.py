@@ -1,28 +1,17 @@
 from importlib.metadata import metadata
 
-import humps
-import structlog
-from asgi_correlation_id import CorrelationIdMiddleware
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
-from fastapi.routing import APIRoute
+from fastapi import FastAPI
 from fastapi_pagination import add_pagination
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
-from app.middleware.structlog import StructLogMiddleware
+from app.core.exceptions import dbapi_exception_handler, sqlalchemy_exception_handler
+from app.utils import generate_unique_route_id
 
-log = structlog.stdlib.get_logger("app")
 project_metadata = metadata("atlas")
-
-
-def custom_generate_unique_id(route: APIRoute) -> str:
-    route_tag = humps.pascalize(str(route.tags[0]))
-    route_name = humps.pascalize(route.name)
-    return f"{route_tag}_{route_name}"
-
 
 app = FastAPI(
     title="ATLAS",
@@ -36,7 +25,11 @@ app = FastAPI(
         "scopes": "openid profile email",
     },
     swagger_ui_parameters={"tryItOutEnabled": True, "persistAuthorization": True},
-    generate_unique_id_function=custom_generate_unique_id,
+    generate_unique_id_function=generate_unique_route_id,
+    exception_handlers={
+        DBAPIError: dbapi_exception_handler,
+        SQLAlchemyError: sqlalchemy_exception_handler,
+    },
 )
 
 app.add_middleware(
@@ -47,29 +40,7 @@ app.add_middleware(
     allow_headers=settings.cors.allow_headers,
 )
 
-
-@app.exception_handler(DBAPIError)
-async def dbapi_exception_handler(request: Request, exc: DBAPIError) -> JSONResponse:
-    log.error(
-        f"DBAPIError: {exc.orig}",
-        statement=exc.statement,
-        params=exc.params,
-        exc_info=settings.log.tracebacks,
-    )
-    raise HTTPException(status_code=500, detail="An unexpected error occurred.")
-
-
-@app.exception_handler(SQLAlchemyError)
-async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:
-    log.error(
-        f"SQLAlchemyError: {exc}",
-        exc_info=settings.log.tracebacks,
-    )
-    raise HTTPException(status_code=500, detail="An unexpected error occurred.")
-
-
-app.add_middleware(StructLogMiddleware)
-app.add_middleware(CorrelationIdMiddleware)
-
 add_pagination(app)
 app.include_router(api_router)
+
+FastAPIInstrumentor.instrument_app(app)

@@ -56,3 +56,4 @@ services:
 volumes:
   postgres-data:
   minio-data:
+  tempo-data:

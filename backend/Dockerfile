@@ -55,13 +55,12 @@ COPY --from=builder --chown=app:app /app /app
 # Switch to app user
 USER app
 
-ARG APP_VERSION
 ARG GIT_COMMIT
 
 ENV \
   # The OTEL_RESOURCE_ATTRIBUTES environment variable allows resource attributes to be passed to the SDK at process invocation.
   # ref: https://opentelemetry-python.readthedocs.io/en/latest/sdk/environment_variables.html#opentelemetry.sdk.environment_variables.OTEL_RESOURCE_ATTRIBUTES
-  OTEL_RESOURCE_ATTRIBUTES="service.version=${APP_VERSION:-unknown},service.git.commit=${GIT_COMMIT:-unknown}" \
+  OTEL_RESOURCE_ATTRIBUTES="service.git.commit=${GIT_COMMIT:-unknown}" \
   # Immediately write to stdout and stderr instead of buffering the output
   PYTHONUNBUFFERED=1 \
   # Add the app venv to $PATH

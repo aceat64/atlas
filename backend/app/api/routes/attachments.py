@@ -1,10 +1,13 @@
 import hashlib
-from collections.abc import AsyncGenerator
 from typing import Any
 
-import aioboto3  # type: ignore[import-untyped]
+import obstore
+import structlog
 from fastapi import APIRouter, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
+from opentelemetry import trace
+from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry.trace import SpanKind, Status, StatusCode
 
 from app.api.deps import CurrentUser, SessionDep, default_responses
 from app.core.config import settings
@@ -17,6 +20,23 @@ router = APIRouter()
 
 hash_chunk_size = 1024 * 1024  # 1MB chunks
 s3_chunk_size = hash_chunk_size
+
+log = structlog.stdlib.get_logger("app")
+store = obstore.store.S3Store(
+    settings.s3.bucket_name,
+    aws_endpoint=str(settings.s3.endpoint),
+    access_key_id=settings.s3.access_key_id,
+    secret_access_key=settings.s3.secret_access_key,
+    client_options={
+        "allow_http": settings.s3.allow_http,
+        "allow_invalid_certificates": settings.s3.allow_invalid_certificates,
+    },
+)
+obstore_tracer = trace.get_tracer("instrumentation.obstore")
+
+
+def attachment_path(attachment: Attachment) -> str:
+    return f"{settings.s3.path_prefix}item_{attachment.item_id}/attachments/{attachment.id}"
 
 
 @router.post("/{item_id}/attachment", responses=default_responses, response_model=AttachmentPublic)
@@ -48,46 +68,22 @@ async def create_attachment(
     attachment.checksum_sha256 = hash_obj.hexdigest()
     await file.seek(0)
 
-    # TODO: Move s3 client setup to deps?
-    boto_session = aioboto3.Session(
-        aws_access_key_id=settings.s3.access_key_id,
-        aws_secret_access_key=settings.s3.secret_access_key,
-        region_name=settings.s3.region_name,
-    )
-    async with boto_session.client("s3", endpoint_url=str(settings.s3.url)) as s3:
+    with obstore_tracer.start_as_current_span("PUT", kind=SpanKind.CLIENT) as span:
+        span.set_attribute(SpanAttributes.HTTP_REQUEST_METHOD, "PUT")
         try:
-            await s3.upload_fileobj(
-                file,
-                settings.s3.bucket_name,
-                f"{settings.s3.path_prefix}item_{attachment.item_id}/attachments/{attachment.id}",
-                ExtraArgs={"ContentType": attachment.content_type},
-            )
+            await obstore.put_async(store, attachment_path(attachment), file.file)
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"Upload failed: {exc}") from exc
+            span.set_status(Status(StatusCode.ERROR))
+            span.record_exception(exc)
+            log.error("Upload failed", exc_info=exc if settings.log.tracebacks else None)
+            raise HTTPException(status_code=500, detail="Upload failed") from exc
 
     # Update checksum in db now that file has been uploaded
     session.add(attachment)
     await session.commit()
     await session.refresh(attachment)
+    log.debug("Attachment uploaded", item_id=item_id, attachment_id=attachment.id)
     return attachment
-
-
-async def get_s3_chunk(attachment: Attachment) -> AsyncGenerator[bytes]:
-    """Streaming download of an S3 object."""
-
-    # TODO: Move s3 client setup to deps?
-    boto_session = aioboto3.Session(
-        aws_access_key_id=settings.s3.access_key_id,
-        aws_secret_access_key=settings.s3.secret_access_key,
-        region_name=settings.s3.region_name,
-    )
-    async with boto_session.client("s3", endpoint_url=str(settings.s3.url)) as s3:
-        s3_obj = await s3.get_object(
-            Bucket=settings.s3.bucket_name,
-            Key=f"{settings.s3.path_prefix}item_{attachment.item_id}/attachments/{attachment.id}",
-        )
-        async with s3_obj["Body"] as stream:
-            yield await stream.read()
 
 
 # TODO: Add 200 to responses
@@ -103,19 +99,41 @@ async def get_attachment(
 
     item = await session.get(Item, item_id)
     if not item:
+        log.debug("Item not found", item_id=item_id)
         raise HTTPException(status_code=404, detail="Item not found")
 
     attachment = await session.get(Attachment, attachment_id)
     if not attachment:
+        log.debug("Attachment not found", item_id=item_id, attachment_id=attachment_id)
         raise HTTPException(status_code=404, detail="Attachment not found")
 
-    return StreamingResponse(
-        content=get_s3_chunk(attachment),
-        media_type=attachment.content_type,
-        headers={
-            "Content-Disposition": content_disposition_header(attachment.filename, "attachment")
-        },
-    )
+    with obstore_tracer.start_as_current_span("GET", kind=SpanKind.CLIENT) as span:
+        span.set_attribute(SpanAttributes.HTTP_REQUEST_METHOD, "GET")
+        try:
+            resp = await obstore.get_async(store, attachment_path(attachment))
+            return StreamingResponse(
+                content=resp,
+                media_type=attachment.content_type,
+                headers={
+                    "Content-Disposition": content_disposition_header(
+                        attachment.filename, "attachment"
+                    )
+                },
+            )
+        except FileNotFoundError as exc:
+            log.debug(
+                "Attachment not found in object store",
+                item_id=item_id,
+                attachment_id=attachment_id,
+            )
+            raise HTTPException(
+                status_code=404, detail="Attachment not found in object store"
+            ) from exc
+        except Exception as exc:
+            span.set_status(Status(StatusCode.ERROR))
+            span.record_exception(exc)
+            log.error("Download failed", item_id=item_id, attachment_id=attachment_id, exc_info=exc)
+            raise HTTPException(status_code=500, detail="Download failed") from exc
 
 
 @router.delete("/{item_id}/attachment/{attachment_id}", responses=default_responses)
@@ -126,31 +144,33 @@ async def delete_attachment(
 
     item = await session.get(Item, item_id)
     if not item:
+        log.debug("Item not found", item_id=item_id)
         raise HTTPException(status_code=404, detail="Item not found")
 
     attachment = await session.get(Attachment, attachment_id)
     if not attachment:
+        log.debug("Attachment not found", item_id=item_id, attachment_id=attachment_id)
         raise HTTPException(status_code=404, detail="Attachment not found")
 
     # Delete database entry (but don't commit yet)
     await session.delete(attachment)
 
-    # TODO: Move s3 client setup to deps?
-    boto_session = aioboto3.Session(
-        aws_access_key_id=settings.s3.access_key_id,
-        aws_secret_access_key=settings.s3.secret_access_key,
-        region_name=settings.s3.region_name,
-    )
-    async with boto_session.client("s3", endpoint_url=str(settings.s3.url)) as s3:
+    with obstore_tracer.start_as_current_span("DELETE", kind=SpanKind.CLIENT) as span:
+        span.set_attribute(SpanAttributes.HTTP_REQUEST_METHOD, "DELETE")
+        # Delete from object store
         try:
-            await s3.delete_object(
-                Bucket=settings.s3.bucket_name,
-                Key=f"{settings.s3.path_prefix}item_{attachment.item_id}/attachments/{attachment.id}",
+            await obstore.delete_async(store, attachment_path(attachment))
+        except FileNotFoundError as exc:
+            span.set_status(Status(StatusCode.ERROR))
+            span.record_exception(exc)
+            # This may not be needed
+            # delete_async() doesn't seem to raise a FileNotFoundError exception
+            log.warning(
+                "File was missing from object store",
+                exc_info=exc if settings.log.tracebacks else None,
             )
-        except Exception as exc:
-            # TODO: Test out various failure modes, we may still want to delete the db entry
-            raise HTTPException(status_code=500, detail=f"Delete failed: {exc}") from exc
 
     # File deleted from bucket, so we can delete the db entry
     await session.commit()
+    log.debug("Attachment deleted", item_id=item_id, attachment_id=attachment_id)
     return Message(detail="Attachment deleted successfully")

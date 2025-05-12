@@ -6,52 +6,35 @@ authors = [{ name = "Andrew LeCody" }]
 readme = "DOCS.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "aioboto3>=14.1.0",
-    "alembic>=1.14.1",
-    "asgi-correlation-id>=4.3.4",
-    "fastapi-pagination>=0.12.34",
-    "fastapi[standard]>=0.115.11,<0.116.0",
+    "alembic>=1.15.2",
+    "fastapi-pagination>=0.13.1",
+    "fastapi[standard]>=0.115.12,<0.116.0",
     "httpx>=0.28.1",
+    "obstore>=0.6.0",
     "opentelemetry-distro==0.53b1",
     "opentelemetry-exporter-otlp>=1.31.1",
-    "opentelemetry-instrumentation-aiohttp-client==0.53b1",
-    "opentelemetry-instrumentation-aiohttp-server==0.53b1",
-    "opentelemetry-instrumentation-asyncio==0.53b1",
-    "opentelemetry-instrumentation-boto3sqs==0.53b1",
-    "opentelemetry-instrumentation-botocore==0.53b1",
-    "opentelemetry-instrumentation-click==0.53b1",
-    "opentelemetry-instrumentation-dbapi==0.53b1",
     "opentelemetry-instrumentation-fastapi==0.53b1",
-    "opentelemetry-instrumentation-grpc==0.53b1",
     "opentelemetry-instrumentation-httpx==0.53b1",
-    "opentelemetry-instrumentation-jinja2==0.53b1",
     "opentelemetry-instrumentation-logging==0.53b1",
-    "opentelemetry-instrumentation-psycopg==0.53b1",
-    "opentelemetry-instrumentation-requests==0.53b1",
     "opentelemetry-instrumentation-sqlalchemy==0.53b1",
-    "opentelemetry-instrumentation-sqlite3==0.53b1",
-    "opentelemetry-instrumentation-starlette==0.53b1",
     "opentelemetry-instrumentation-threading==0.53b1",
-    "opentelemetry-instrumentation-tortoiseorm==0.53b1",
-    "opentelemetry-instrumentation-urllib==0.53b1",
-    "opentelemetry-instrumentation-urllib3==0.53b1",
-    "opentelemetry-instrumentation-wsgi==0.53b1",
-    "psycopg[binary]>=3.2.5",
+    "opentelemetry-semantic-conventions>=0.53b1",
+    "psycopg[binary]>=3.2.7",
     "pydantic>=2.11.4",
-    "pydantic-settings>=2.8.1",
+    "pydantic-settings>=2.9.1",
     "pyhumps>=3.8.0",
     "pyjwt[crypto]>=2.10.1",
-    "sqlalchemy[asyncio]>=2.0.38",
+    "sqlalchemy[asyncio]>=2.0.40",
     "sqlmodel>=0.0.24",
     "structlog>=25.3.0",
 ]
 
 [dependency-groups]
 dev = [
-    "coverage>=7.6.12",
+    "coverage>=7.8.0",
     "mypy>=1.15.0",
     "pytest>=8.3.5",
-    "ruff>=0.9.9",
+    "ruff>=0.11.9",
 ]
 
 [project.scripts]
@@ -68,7 +51,8 @@ packages = ["app"]
 strict = true
 exclude = ["venv", ".venv"]
 plugins = ["pydantic.mypy"]
-enable_error_code = ["deprecated", "unreachable", "no-any-unimported", "redundant-self"]
+warn_unreachable = true
+enable_error_code = ["deprecated", "no-any-unimported", "redundant-self"]
 
 [tool.ruff]
 line-length = 100

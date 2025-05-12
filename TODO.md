@@ -1,8 +1,5 @@
 # TODO
 
-- [ ] All the CI/CD stuff
-- [ ] Setup Renovate
-
 ## Backend
 
 - [x] Finish out routes
@@ -17,9 +14,8 @@
 - [ ] Validate foreign keys, ideally using `RequestValidationError` instead of `HTTPException(status_code=404)`
 - [x] Actually save attachments to object storage
 - [x] Figure out database async
-- [ ] Move s3 client setup to deps?
 - [x] Logging
-- [ ] Tracing
+- [x] Tracing
 - [ ] Metrics
 - [ ] [OAuth2 scopes](https://fastapi.tiangolo.com/advanced/security/oauth2-scopes/)
 - [ ] [Generate clients](https://fastapi.tiangolo.com/advanced/generate-clients/)
@@ -36,3 +32,4 @@
   - [ ] mypy
   - [ ] ruff (with `--output-format=github`)
 - [ ] test workflow, with annotations and summaries
+- [ ] Setup Renovate

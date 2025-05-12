@@ -2,6 +2,15 @@ from typing import Literal
 from unicodedata import normalize
 from urllib.parse import quote
 
+import humps
+from fastapi.routing import APIRoute
+
+
+def generate_unique_route_id(route: APIRoute) -> str:
+    route_tag = humps.pascalize(str(route.tags[0]))
+    route_name = humps.pascalize(route.name)
+    return f"{route_tag}_{route_name}"
+
 
 def content_disposition_header(
     filename: str, type: Literal["attachment", "inline"] = "attachment"

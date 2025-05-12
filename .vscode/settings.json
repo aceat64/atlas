@@ -17,8 +17,6 @@
   },
   "mypy-type-checker.cwd": "${nearestConfig}",
   "mypy-type-checker.importStrategy": "fromEnvironment",
-  "mypy-type-checker.preferDaemon": true,
-  "mypy-type-checker.reportingScope": "workspace",
   "python.testing.cwd": "${workspaceFolder}/backend",
   "python.testing.pytestArgs": ["-v"],
   "python.testing.unittestEnabled": false,
