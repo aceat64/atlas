@@ -39,6 +39,13 @@ class TelemetrySettings(BaseModel):
     console: bool = Field(False, description="Output traces/spans to the console.")
 
 
+class MetricsSettings(BaseModel):
+    host: str | None = Field(
+        "127.0.0.1", description="Bind socket to this host. Disabled if set to None."
+    )
+    port: int = Field(9090, description="Bind socket to this port.")
+
+
 class CorsSettings(BaseModel):
     """Cross-Origin Resource Sharing (CORS)"""
 
@@ -130,6 +137,7 @@ class Settings(BaseSettings):
     log: LogSettings = LogSettings()
     cors: CorsSettings = CorsSettings()
     telemetry: TelemetrySettings = TelemetrySettings()
+    metrics: MetricsSettings = MetricsSettings()
     s3: S3Settings
 
     @field_validator("db_uri")

@@ -16,7 +16,7 @@
 - [x] Figure out database async
 - [x] Logging
 - [x] Tracing
-- [ ] Metrics
+- [x] Metrics
 - [ ] [OAuth2 scopes](https://fastapi.tiangolo.com/advanced/security/oauth2-scopes/)
 - [ ] [Generate clients](https://fastapi.tiangolo.com/advanced/generate-clients/)
 - [ ] Improve error message for invalid config

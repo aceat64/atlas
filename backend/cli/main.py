@@ -23,7 +23,7 @@ def serve(
     host: Annotated[str, typer.Option(help="Bind socket to this host.")] = "0.0.0.0",
     port: Annotated[
         int, typer.Option(help="Bind socket to this port. If 0, an available port will be picked.")
-    ] = 8000,
+    ] = 8080,
 ) -> None:
     uvicorn.run(
         "app.main:app",
