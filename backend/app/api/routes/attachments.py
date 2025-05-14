@@ -75,7 +75,7 @@ async def create_attachment(
         except Exception as exc:
             span.set_status(Status(StatusCode.ERROR))
             span.record_exception(exc)
-            log.error("Upload failed", exc_info=exc if settings.log.tracebacks else None)
+            log.error("Upload failed", exc_info=exc)
             raise HTTPException(status_code=500, detail="Upload failed") from exc
 
     # Update checksum in db now that file has been uploaded
@@ -165,10 +165,7 @@ async def delete_attachment(
             span.record_exception(exc)
             # This may not be needed
             # delete_async() doesn't seem to raise a FileNotFoundError exception
-            log.warning(
-                "File was missing from object store",
-                exc_info=exc if settings.log.tracebacks else None,
-            )
+            log.warning("File was missing from object store", exc_info=exc)
 
     # File deleted from bucket, so we can delete the db entry
     await session.commit()

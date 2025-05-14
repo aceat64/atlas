@@ -25,10 +25,6 @@ class LogSettings(BaseModel):
     ] = "INFO"
     access_log: bool = Field(True, description="Enable/Disable access log")
 
-    @property
-    def tracebacks(self) -> bool:
-        return self.level == "DEBUG"
-
 
 class TelemetrySettings(BaseModel):
     endpoint: AnyUrl | None = Field(
