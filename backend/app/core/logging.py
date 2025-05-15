@@ -10,7 +10,7 @@ import structlog
 from opentelemetry import trace
 from structlog.types import EventDict, Processor
 
-from app.core.config import settings
+from app.core.config import Settings
 
 # Adapted from: https://wazaari.dev/blog/fastapi-structlog-integration
 
@@ -41,7 +41,7 @@ def drop_color_message_key(logger: Any, method_name: str, event_dict: EventDict)
     return event_dict
 
 
-def setup_logging() -> None:
+def setup_logging(settings: Settings) -> None:
     if settings.log.format == "console":
         timestamper = structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S", utc=False)
     else:

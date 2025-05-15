@@ -7,12 +7,13 @@ from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
-from app.core.config import settings
+from app.core.config import Settings
 from app.core.exceptions import dbapi_exception_handler, sqlalchemy_exception_handler
 from app.core.telemetry import setup_telemetry
 from app.utils import generate_unique_route_id
 
 project_metadata = metadata("atlas")
+settings = Settings()
 
 app = FastAPI(
     title="ATLAS",
@@ -44,5 +45,5 @@ app.add_middleware(
 add_pagination(app)
 app.include_router(api_router)
 
-setup_telemetry()
+setup_telemetry(settings)
 FastAPIInstrumentor.instrument_app(app)

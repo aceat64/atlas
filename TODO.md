@@ -19,8 +19,9 @@
 - [x] Metrics
 - [ ] [OAuth2 scopes](https://fastapi.tiangolo.com/advanced/security/oauth2-scopes/)
 - [ ] [Generate clients](https://fastapi.tiangolo.com/advanced/generate-clients/)
-- [ ] Improve error message for invalid config
+- [x] Improve error message for invalid config
 - [ ] CLI command to generate an example toml config file
+- [ ] Try using pydantic-settings CLI instead of Typer
 
 ## Frontend
 

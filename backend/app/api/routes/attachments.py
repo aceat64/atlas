@@ -9,8 +9,7 @@ from opentelemetry import trace
 from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.trace import SpanKind, Status, StatusCode
 
-from app.api.deps import CurrentUser, SessionDep, default_responses
-from app.core.config import settings
+from app.api.deps import CurrentUser, ObjectStoreDep, SessionDep, default_responses
 from app.models import Message
 from app.models.attachment import Attachment, AttachmentPublic
 from app.models.item import Item
@@ -22,26 +21,16 @@ hash_chunk_size = 1024 * 1024  # 1MB chunks
 s3_chunk_size = hash_chunk_size
 
 log = structlog.stdlib.get_logger("app")
-store = obstore.store.S3Store(
-    settings.s3.bucket_name,
-    aws_endpoint=str(settings.s3.endpoint),
-    access_key_id=settings.s3.access_key_id,
-    secret_access_key=settings.s3.secret_access_key,
-    client_options={
-        "allow_http": settings.s3.allow_http,
-        "allow_invalid_certificates": settings.s3.allow_invalid_certificates,
-    },
-)
 obstore_tracer = trace.get_tracer("instrumentation.obstore")
 
 
 def attachment_path(attachment: Attachment) -> str:
-    return f"{settings.s3.path_prefix}item_{attachment.item_id}/attachments/{attachment.id}"
+    return f"item_{attachment.item_id}/attachments/{attachment.id}"
 
 
 @router.post("/{item_id}/attachment", responses=default_responses, response_model=AttachmentPublic)
 async def create_attachment(
-    session: SessionDep, user: CurrentUser, item_id: int, file: UploadFile
+    session: SessionDep, user: CurrentUser, store: ObjectStoreDep, item_id: int, file: UploadFile
 ) -> Any:
     """Upload and attach a file to an item."""
 
@@ -71,18 +60,30 @@ async def create_attachment(
     with obstore_tracer.start_as_current_span("PUT", kind=SpanKind.CLIENT) as span:
         span.set_attribute(SpanAttributes.HTTP_REQUEST_METHOD, "PUT")
         try:
-            await obstore.put_async(store, attachment_path(attachment), file.file)
+            path = attachment_path(attachment)
+            await obstore.put_async(store, path, file.file)
         except Exception as exc:
             span.set_status(Status(StatusCode.ERROR))
             span.record_exception(exc)
-            log.error("Upload failed", exc_info=exc)
+            log.error(
+                "Upload failed",
+                item_id=item_id,
+                attachment_id=attachment.id,
+                attachment_path=path,
+                exc_info=exc,
+            )
             raise HTTPException(status_code=500, detail="Upload failed") from exc
 
     # Update checksum in db now that file has been uploaded
     session.add(attachment)
     await session.commit()
     await session.refresh(attachment)
-    log.debug("Attachment uploaded", item_id=item_id, attachment_id=attachment.id)
+    log.debug(
+        "Attachment uploaded",
+        item_id=item_id,
+        attachment_id=attachment.id,
+        attachment_path=path,
+    )
     return attachment
 
 
@@ -93,7 +94,7 @@ async def create_attachment(
     response_class=StreamingResponse,
 )
 async def get_attachment(
-    session: SessionDep, user: CurrentUser, item_id: int, attachment_id: int
+    session: SessionDep, user: CurrentUser, store: ObjectStoreDep, item_id: int, attachment_id: int
 ) -> StreamingResponse:
     """Download an attached file."""
 
@@ -110,7 +111,8 @@ async def get_attachment(
     with obstore_tracer.start_as_current_span("GET", kind=SpanKind.CLIENT) as span:
         span.set_attribute(SpanAttributes.HTTP_REQUEST_METHOD, "GET")
         try:
-            resp = await obstore.get_async(store, attachment_path(attachment))
+            path = attachment_path(attachment)
+            resp = await obstore.get_async(store, path)
             return StreamingResponse(
                 content=resp,
                 media_type=attachment.content_type,
@@ -125,6 +127,7 @@ async def get_attachment(
                 "Attachment not found in object store",
                 item_id=item_id,
                 attachment_id=attachment_id,
+                attachment_path=path,
             )
             raise HTTPException(
                 status_code=404, detail="Attachment not found in object store"
@@ -132,13 +135,19 @@ async def get_attachment(
         except Exception as exc:
             span.set_status(Status(StatusCode.ERROR))
             span.record_exception(exc)
-            log.error("Download failed", item_id=item_id, attachment_id=attachment_id, exc_info=exc)
+            log.error(
+                "Download failed",
+                item_id=item_id,
+                attachment_id=attachment_id,
+                attachment_path=path,
+                exc_info=exc,
+            )
             raise HTTPException(status_code=500, detail="Download failed") from exc
 
 
 @router.delete("/{item_id}/attachment/{attachment_id}", responses=default_responses)
 async def delete_attachment(
-    session: SessionDep, user: CurrentUser, item_id: int, attachment_id: int
+    session: SessionDep, user: CurrentUser, store: ObjectStoreDep, item_id: int, attachment_id: int
 ) -> Message:
     """Delete a file attachment."""
 
@@ -159,15 +168,27 @@ async def delete_attachment(
         span.set_attribute(SpanAttributes.HTTP_REQUEST_METHOD, "DELETE")
         # Delete from object store
         try:
-            await obstore.delete_async(store, attachment_path(attachment))
+            path = attachment_path(attachment)
+            await obstore.delete_async(store, path)
         except FileNotFoundError as exc:
             span.set_status(Status(StatusCode.ERROR))
             span.record_exception(exc)
             # This may not be needed
             # delete_async() doesn't seem to raise a FileNotFoundError exception
-            log.warning("File was missing from object store", exc_info=exc)
+            log.warning(
+                "File was missing from object store",
+                item_id=item_id,
+                attachment_id=attachment_id,
+                attachment_path=path,
+                exc_info=exc,
+            )
 
     # File deleted from bucket, so we can delete the db entry
     await session.commit()
-    log.debug("Attachment deleted", item_id=item_id, attachment_id=attachment_id)
+    log.debug(
+        "Attachment deleted",
+        item_id=item_id,
+        attachment_id=attachment_id,
+        attachment_path=path,
+    )
     return Message(detail="Attachment deleted successfully")

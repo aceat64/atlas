@@ -3,6 +3,7 @@ from typing import Annotated, Any
 
 import httpx
 import jwt
+import structlog
 from jwt import PyJWKSet
 from pydantic import (
     AnyHttpUrl,
@@ -12,6 +13,8 @@ from pydantic import (
     GetPydanticSchema,
     model_validator,
 )
+
+log = structlog.get_logger("oidc")
 
 
 class AuthBaseModel(BaseModel):
@@ -803,6 +806,7 @@ class OpenIDConnectDiscovery(AuthBaseModel):
         if isinstance(data, dict) and "discovery_url" in data:
             discovery_url = data["discovery_url"]
             try:
+                log.info("Fetching OIDC Discovery document", url=str(discovery_url))
                 # Fetch the discovery document
                 with httpx.Client(timeout=10.0) as client:
                     # Get discovery document
@@ -815,6 +819,7 @@ class OpenIDConnectDiscovery(AuthBaseModel):
                     if not jwks_uri:
                         raise KeyError("jwks_uri not found in discovery document")
 
+                    log.info("Fetching JWKS document", url=str(jwks_uri))
                     jwks_response = client.get(jwks_uri)
                     jwks_response.raise_for_status()
                     jwks_data = jwks_response.json()
@@ -864,6 +869,8 @@ class OpenIDConnectDiscovery(AuthBaseModel):
 
     def refresh_jwks(self) -> None:
         """Refresh the JWKS data from the jwks_uri endpoint."""
+
+        log.info("Refreshing JWKS document", url=str(self.metadata.jwks_uri))
         try:
             with httpx.Client(timeout=10.0) as client:
                 jwks_response = client.get(str(self.metadata.jwks_uri))

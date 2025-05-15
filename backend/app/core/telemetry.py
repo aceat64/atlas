@@ -14,12 +14,12 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExport
 from opentelemetry.sdk.trace.sampling import ALWAYS_ON, ParentBased
 from prometheus_client import start_http_server
 
-from app.core.config import settings
+from app.core.config import Settings
 
 log = structlog.stdlib.get_logger("telemetry")
 
 
-def setup_telemetry() -> None:
+def setup_telemetry(settings: Settings) -> None:
     project_metadata = metadata("atlas")
 
     resource = Resource(

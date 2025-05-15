@@ -1,3 +1,4 @@
+import os
 from typing import Annotated, Literal, Self
 
 from pydantic import (
@@ -16,6 +17,18 @@ from pydantic_settings import (
     SettingsConfigDict,
     TomlConfigSettingsSource,
 )
+
+
+class ServerSettings(BaseModel):
+    host: str = Field("127.0.0.1", description="Bind socket to this host.")
+    port: int = Field(
+        8080, description="Bind socket to this port. If 0, an available port will be picked."
+    )
+    uds: str | None = Field(None, description="Bind to a UNIX domain socket.")
+    forwarded_allow_ips: list[str] | str | None = Field(
+        None,
+        description="Comma separated list of IP Addresses, IP Networks, or literals (e.g. UNIX Socket path) to trust with proxy headers. The literal '*' means trust everything.",  # noqa: E501
+    )
 
 
 class LogSettings(BaseModel):
@@ -54,7 +67,7 @@ class CorsSettings(BaseModel):
 class S3Settings(BaseModel):
     """S3-Compatible object storage settings."""
 
-    bucket_name: str
+    bucket_name: str = "app"
     path_prefix: str = "/"
     region_name: str | None = Field(
         None,
@@ -91,17 +104,7 @@ class Settings(BaseSettings):
     """Application settings"""
 
     # Look for and load settings from specific toml files
-    model_config = SettingsConfigDict(
-        env_prefix="ATLAS",
-        toml_file=[
-            # First, load the defaults
-            # "settings.default.toml",
-            # Next, load localdev (if it exists)
-            "settings.localdev.toml",
-            # Finally, load /config/settings.toml (should only exist when running in a container)
-            "/config/settings.toml",
-        ],
-    )
+    model_config = SettingsConfigDict(env_prefix="ATLAS_", env_nested_delimiter="__")
 
     @classmethod
     def settings_customise_sources(
@@ -113,9 +116,15 @@ class Settings(BaseSettings):
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         # Load settings from environment variables and toml files.
-        return env_settings, TomlConfigSettingsSource(settings_cls)
+        return env_settings, TomlConfigSettingsSource(
+            settings_cls,
+            toml_file=os.environ.get(
+                "ATLAS_CONFIG_FILE", ["/config/settings.toml", "settings.toml"]
+            ),
+        )
 
     db_uri: PostgresDsn = Field(
+        PostgresDsn("postgresql://app:app@localhost:5432/app"),
         title="Database URI",
         description="Must include the database name.",
         examples=[
@@ -125,22 +134,21 @@ class Settings(BaseSettings):
     )
 
     oidc_url: AnyHttpUrl = Field(
+        AnyHttpUrl("https://authentik/application/o/atlas/.well-known/openid-configuration"),
         title="OIDC Discovery URL",
         description="Must be a valid OIDC Discovery endpoint, these usually end with `/.well-known/openid-configuration`.",  # noqa: E501
         examples=["https://authentik/application/o/atlas/.well-known/openid-configuration"],
     )
 
     log: LogSettings = LogSettings()
+    server: ServerSettings = ServerSettings()
     cors: CorsSettings = CorsSettings()
     telemetry: TelemetrySettings = TelemetrySettings()
     metrics: MetricsSettings = MetricsSettings()
-    s3: S3Settings
+    s3: S3Settings = S3Settings()
 
     @field_validator("db_uri")
     def check_db_name(cls, v: PostgresDsn) -> PostgresDsn:
         """Require a database name"""
         assert v.path and len(v.path) > 1, "database must be provided"
         return v
-
-
-settings = Settings()
