@@ -1,19 +1,12 @@
-from logging.config import fileConfig
-
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
-from app.core.config import Settings
+from app.core.db import db_url
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -22,7 +15,7 @@ target_metadata = SQLModel.metadata
 
 
 def get_url() -> str:
-    return str(Settings().db_uri).replace("postgresql://", "postgresql+psycopg://")
+    return db_url
 
 
 def run_migrations_offline() -> None:
