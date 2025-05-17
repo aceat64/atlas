@@ -21,9 +21,7 @@ async def list_collections(
 ) -> LimitOffsetPage[CollectionPublic]:
     """Retrieve a list of collections."""
 
-    statement = select(Collection).order_by(
-        column(sort).desc() if order == "desc" else column(sort).asc()
-    )
+    statement = select(Collection).order_by(column(sort).desc() if order == "desc" else column(sort).asc())
     page: LimitOffsetPage[CollectionPublic] = await apaginate(session, statement)  # type: ignore[arg-type]
     # It feels wrong to ignore the incompatible arg-type
     return page
@@ -41,9 +39,7 @@ async def get_collection(session: SessionDep, user: CurrentUser, collection_id: 
 
 
 @router.post("/", response_model=CollectionPublic)
-async def create_collection(
-    session: SessionDep, user: CurrentUser, collection_in: CollectionCreate
-) -> Any:
+async def create_collection(session: SessionDep, user: CurrentUser, collection_in: CollectionCreate) -> Any:
     """Create new collection."""
 
     collection = Collection.model_validate(collection_in)
@@ -77,9 +73,7 @@ async def update_collection(
         **default_responses,
         200: {
             "model": Message,
-            "content": {
-                "application/json": {"example": {"detail": "Collection deleted successfully"}}
-            },
+            "content": {"application/json": {"example": {"detail": "Collection deleted successfully"}}},
         },
     },
 )

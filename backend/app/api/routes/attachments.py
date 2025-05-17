@@ -116,11 +116,7 @@ async def get_attachment(
             return StreamingResponse(
                 content=resp,
                 media_type=attachment.content_type,
-                headers={
-                    "Content-Disposition": content_disposition_header(
-                        attachment.filename, "attachment"
-                    )
-                },
+                headers={"Content-Disposition": content_disposition_header(attachment.filename, "attachment")},
             )
         except FileNotFoundError as exc:
             log.debug(
@@ -129,9 +125,7 @@ async def get_attachment(
                 attachment_id=attachment_id,
                 attachment_path=path,
             )
-            raise HTTPException(
-                status_code=404, detail="Attachment not found in object store"
-            ) from exc
+            raise HTTPException(status_code=404, detail="Attachment not found in object store") from exc
         except Exception as exc:
             span.set_status(Status(StatusCode.ERROR))
             span.record_exception(exc)

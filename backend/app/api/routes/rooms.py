@@ -21,9 +21,7 @@ async def list_rooms(
 ) -> LimitOffsetPage[RoomPublic]:
     """Retrieve a list of rooms."""
 
-    statement = select(Room).order_by(
-        column(sort).desc() if order == "desc" else column(sort).asc()
-    )
+    statement = select(Room).order_by(column(sort).desc() if order == "desc" else column(sort).asc())
 
     page: LimitOffsetPage[RoomPublic] = await apaginate(session, statement)  # type: ignore[arg-type]
     # It feels wrong to ignore the incompatible arg-type
@@ -53,9 +51,7 @@ async def create_room(session: SessionDep, current_user: CurrentUser, room_in: R
 
 
 @router.put("/{room_id}", response_model=RoomPublic, responses=default_responses)
-async def update_room(
-    session: SessionDep, current_user: CurrentUser, room_id: int, room_in: RoomUpdate
-) -> Any:
+async def update_room(session: SessionDep, current_user: CurrentUser, room_id: int, room_in: RoomUpdate) -> Any:
     """Update a room."""
 
     room = await session.get(Room, room_id)

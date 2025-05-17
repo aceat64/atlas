@@ -22,9 +22,7 @@ async def list_items(
     current_user: CurrentUser,
     sort: Literal["created_at", "updated_at", "title", "collection", "stack", "id"] = "created_at",
     order: Literal["asc", "desc"] = "desc",
-    type: Annotated[
-        list[ItemType] | None, Query(description="Filter results to specified item types.")
-    ] = None,
+    type: Annotated[list[ItemType] | None, Query(description="Filter results to specified item types.")] = None,
     tag_id: Annotated[
         list[int] | None,
         Query(description="Filter results to items with all of the specified tags."),
@@ -45,9 +43,7 @@ async def list_items(
         statement = (
             select(Item)
             .join(Collection, isouter=True)
-            .order_by(
-                col(Collection.title).desc() if order == "desc" else col(Collection.title).asc()
-            )
+            .order_by(col(Collection.title).desc() if order == "desc" else col(Collection.title).asc())
         )
     elif sort == "stack":
         if order == "desc":
@@ -67,9 +63,7 @@ async def list_items(
                 .order_by(column("slot").asc())
             )
     else:
-        statement = select(Item).order_by(
-            column(sort).desc() if order == "desc" else column(sort).asc()
-        )
+        statement = select(Item).order_by(column(sort).desc() if order == "desc" else column(sort).asc())
 
     if type:
         statement = statement.where(col(Item.item_type).in_(type))
@@ -77,9 +71,7 @@ async def list_items(
     if tag_id:
         for id in tag_id:
             # Create a subquery that checks if the item has this specific tag
-            exists_query = select(ItemTagLink).where(
-                ItemTagLink.item_id == Item.id, ItemTagLink.tag_id == id
-            )
+            exists_query = select(ItemTagLink).where(ItemTagLink.item_id == Item.id, ItemTagLink.tag_id == id)
 
             # Add an EXISTS filter for this tag
             statement = statement.where(exists(exists_query))
@@ -107,9 +99,7 @@ async def get_item(session: SessionDep, current_user: CurrentUser, item_id: int)
 
 
 @router.post("/", response_model=ItemPublic)
-async def create_item(
-    *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
-) -> Any:
+async def create_item(*, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate) -> Any:
     """Create new item."""
 
     item = Item.model_validate(item_in)
@@ -120,9 +110,7 @@ async def create_item(
 
 
 @router.put("/{item_id}", response_model=ItemPublic, responses=default_responses)
-async def update_item(
-    *, session: SessionDep, current_user: CurrentUser, item_id: int, item_in: ItemUpdate
-) -> Any:
+async def update_item(*, session: SessionDep, current_user: CurrentUser, item_id: int, item_in: ItemUpdate) -> Any:
     """Update a item."""
 
     item = await session.get(Item, item_id)

@@ -50,9 +50,7 @@ async def create_tag(session: SessionDep, current_user: CurrentUser, tag_in: Tag
 
 
 @router.put("/{tag_id}", response_model=TagPublic, responses=default_responses)
-async def update_tag(
-    session: SessionDep, current_user: CurrentUser, tag_id: int, tag_in: TagUpdate
-) -> Any:
+async def update_tag(session: SessionDep, current_user: CurrentUser, tag_id: int, tag_in: TagUpdate) -> Any:
     """Update a tag."""
 
     tag = await session.get(Tag, tag_id)

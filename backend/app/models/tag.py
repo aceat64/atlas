@@ -23,9 +23,7 @@ class ItemTagLink(SQLModel, table=True):
     __table_args__ = (UniqueConstraint("item_id", "tag_id", name="uix_item_tag"),)
     item_id: int = Field(foreign_key="item.id", primary_key=True)
     tag_id: int = Field(foreign_key="tag.id", primary_key=True)
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), server_default=func.now())
-    )
+    created_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), server_default=func.now()))
 
 
 class TagBase(SQLModel):

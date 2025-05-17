@@ -29,9 +29,7 @@ async def list_stacks(
             .order_by(col(Room.title).desc() if order == "desc" else col(Room.title).asc())
         )
     else:
-        statement = select(Stack).order_by(
-            column(sort).desc() if order == "desc" else column(sort).asc()
-        )
+        statement = select(Stack).order_by(column(sort).desc() if order == "desc" else column(sort).asc())
 
     page: LimitOffsetPage[StackPublic] = await apaginate(session, statement)  # type: ignore[arg-type]
     # It feels wrong to ignore the incompatible arg-type
@@ -50,9 +48,7 @@ async def get_stack(session: SessionDep, current_user: CurrentUser, stack_id: in
 
 
 @router.post("/", response_model=StackPublic)
-async def create_stack(
-    session: SessionDep, current_user: CurrentUser, stack_in: StackCreate
-) -> Any:
+async def create_stack(session: SessionDep, current_user: CurrentUser, stack_in: StackCreate) -> Any:
     """Create new stack."""
 
     stack = Stack.model_validate(stack_in)
@@ -63,9 +59,7 @@ async def create_stack(
 
 
 @router.put("/{stack_id}", response_model=StackPublic, responses=default_responses)
-async def update_stack(
-    session: SessionDep, current_user: CurrentUser, stack_id: int, stack_in: StackUpdate
-) -> Any:
+async def update_stack(session: SessionDep, current_user: CurrentUser, stack_id: int, stack_in: StackUpdate) -> Any:
     """Update a stack."""
 
     stack = await session.get(Stack, stack_id)

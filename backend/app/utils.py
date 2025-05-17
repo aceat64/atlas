@@ -12,9 +12,7 @@ def generate_unique_route_id(route: APIRoute) -> str:
     return f"{route_tag}_{route_name}"
 
 
-def content_disposition_header(
-    filename: str, type: Literal["attachment", "inline"] = "attachment"
-) -> str:
+def content_disposition_header(filename: str, type: Literal["attachment", "inline"] = "attachment") -> str:
     """Build an appropriate value for a Content-Disposition HTTP header"""
 
     # normalize the filename to ascii only characters

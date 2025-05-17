@@ -19,11 +19,4 @@ for line in sys.stdin:
     if error["hint"]:
         message += f"%0A%0A{error['hint']}"
 
-    print(
-        f"::{command} "
-        f"file={error['file']},"
-        f"line={error['line']},"
-        f"col={error['column']},"
-        f"title={title}"
-        f"::{message}"
-    )
+    print(f"::{command} file={error['file']},line={error['line']},col={error['column']},title={title}::{message}")

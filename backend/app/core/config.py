@@ -27,12 +27,8 @@ class ServerSettings(BaseModel):
     """
 
     host: str = Field("127.0.0.1", description="Bind socket to this host.", examples=["0.0.0.0"])
-    port: int = Field(
-        8080, description="Bind socket to this port. If 0, an available port will be picked."
-    )
-    uds: str | None = Field(
-        None, description="Bind to a UNIX domain socket.", examples=["/var/run/atlas.sock"]
-    )
+    port: int = Field(8080, description="Bind socket to this port. If 0, an available port will be picked.")
+    uds: str | None = Field(None, description="Bind to a UNIX domain socket.", examples=["/var/run/atlas.sock"])
     forwarded_allow_ips: list[str] | str | None = Field(
         None,
         description="Comma separated list of IP Addresses, IP Networks, or literals (e.g. UNIX Socket path) to trust with proxy headers. The literal '*' means trust everything.",  # noqa: E501
@@ -47,9 +43,7 @@ class LogSettings(BaseModel):
         "console",
         description="Console format is human readable and colored. JSON and logfmt are single line per log entry.",
     )
-    level: Annotated[
-        Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], BeforeValidator(str.upper)
-    ] = "INFO"
+    level: Annotated[Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], BeforeValidator(str.upper)] = "INFO"
     access_log: bool = Field(True, description="Enable/Disable access log")
 
 
@@ -111,9 +105,7 @@ class S3Settings(BaseModel):
         description="If not set, AWS SDK auto-discovery will be used (envvar `AWS_SECRET_ACCESS_KEY`).",
     )
     allow_http: bool = Field(False, description="Allow connecting over HTTP.")
-    allow_invalid_certificates: bool = Field(
-        False, description="Allow invalid/untrusted certificates."
-    )
+    allow_invalid_certificates: bool = Field(False, description="Allow invalid/untrusted certificates.")
 
     @model_validator(mode="after")
     def check_endpoint_http(self) -> Self:
@@ -141,9 +133,7 @@ class Settings(BaseSettings):
         # Load settings from environment variables and toml files.
         return env_settings, TomlConfigSettingsSource(
             settings_cls,
-            toml_file=os.environ.get(
-                "ATLAS_CONFIG_FILE", ["/config/settings.toml", "settings.toml"]
-            ),
+            toml_file=os.environ.get("ATLAS_CONFIG_FILE", ["/config/settings.toml", "settings.toml"]),
         )
 
     db_uri: PostgresDsn = Field(

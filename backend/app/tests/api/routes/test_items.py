@@ -43,9 +43,7 @@ def test_read_item_not_found(client: TestClient) -> None:
 
 def test_read_items(client: TestClient, db: Session) -> None:
     create_random_item(db)
-    create_random_item(
-        db, create_collection=False, create_stack=False, create_shelf=False, create_slot=False
-    )
+    create_random_item(db, create_collection=False, create_stack=False, create_shelf=False, create_slot=False)
     response = client.get("/items/")
     assert response.status_code == 200
     content = response.json()

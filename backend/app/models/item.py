@@ -25,9 +25,7 @@ class ItemBase(SQLModel):
 
     title: str = Field(min_length=1, max_length=255)
     item_type: ItemType
-    collection_id: int | None = Field(
-        default=None, foreign_key="collection.id", ondelete="SET NULL"
-    )
+    collection_id: int | None = Field(default=None, foreign_key="collection.id", ondelete="SET NULL")
     stack_id: int | None = Field(default=None, foreign_key="stack.id", ondelete="SET NULL")
     shelf: int | None = None
     slot: int | None = None

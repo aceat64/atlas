@@ -20,9 +20,7 @@ async def list_users(
 ) -> LimitOffsetPage[UserPublic]:
     """Retrieve a list of users."""
 
-    statement = select(User).order_by(
-        column(sort).desc() if order == "desc" else column(sort).asc()
-    )
+    statement = select(User).order_by(column(sort).desc() if order == "desc" else column(sort).asc())
     page: LimitOffsetPage[UserPublic] = await apaginate(session, statement)  # type: ignore[arg-type]
     # It feels wrong to ignore the incompatible arg-type
     return page
