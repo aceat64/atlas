@@ -20,19 +20,33 @@ from pydantic_settings import (
 
 
 class ServerSettings(BaseModel):
-    host: str = Field("127.0.0.1", description="Bind socket to this host.")
+    """
+    Uvicorn configuration, passed directly to `uvicorn.run()`.
+
+    ref: https://www.uvicorn.org/settings/
+    """
+
+    host: str = Field("127.0.0.1", description="Bind socket to this host.", examples=["0.0.0.0"])
     port: int = Field(
         8080, description="Bind socket to this port. If 0, an available port will be picked."
     )
-    uds: str | None = Field(None, description="Bind to a UNIX domain socket.")
+    uds: str | None = Field(
+        None, description="Bind to a UNIX domain socket.", examples=["/var/run/atlas.sock"]
+    )
     forwarded_allow_ips: list[str] | str | None = Field(
         None,
         description="Comma separated list of IP Addresses, IP Networks, or literals (e.g. UNIX Socket path) to trust with proxy headers. The literal '*' means trust everything.",  # noqa: E501
+        examples=["*", "127.0.0.1", "192.168.0.0/16", "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"],
     )
 
 
 class LogSettings(BaseModel):
-    format: Literal["json", "logfmt", "console"] = "console"
+    """Logging"""
+
+    format: Literal["json", "logfmt", "console"] = Field(
+        "console",
+        description="Console format is human readable and colored. JSON and logfmt are single line per log entry.",
+    )
     level: Annotated[
         Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], BeforeValidator(str.upper)
     ] = "INFO"
@@ -40,17 +54,26 @@ class LogSettings(BaseModel):
 
 
 class TelemetrySettings(BaseModel):
+    """Telemetry"""
+
     endpoint: AnyUrl | None = Field(
         None,
         examples=["http://localhost:4318/v1/traces"],
         description="OTLP endpoint",
     )
-    console: bool = Field(False, description="Output traces/spans to the console.")
+    console: bool = Field(
+        False,
+        description="Output traces/spans directly to the console. The log format setting does not apply to traces/spans.",  # noqa: E501
+    )
 
 
 class MetricsSettings(BaseModel):
+    """Metrics"""
+
     host: str | None = Field(
-        "127.0.0.1", description="Bind socket to this host. Disabled if set to None."
+        "127.0.0.1",
+        description="Bind socket to this host. Disabled if set to None.",
+        examples=["0.0.0.0"],
     )
     port: int = Field(9090, description="Bind socket to this port.")
 
@@ -65,7 +88,7 @@ class CorsSettings(BaseModel):
 
 
 class S3Settings(BaseModel):
-    """S3-Compatible object storage settings."""
+    """Object Storage"""
 
     bucket_name: str = "app"
     path_prefix: str = "/"
@@ -77,7 +100,7 @@ class S3Settings(BaseModel):
     endpoint: AnyHttpUrl | None = Field(
         None,
         examples=["http://localhost:9000"],
-        description="If not set, AWS SDK auto-discovery will be used (envvar `AWS_ENDPOINT_URL_S3`).",  # noqa: E501
+        description="If not set, AWS SDK auto-discovery will be used (envvar `AWS_ENDPOINT_URL_S3`).",
     )
     access_key_id: str | None = Field(
         None,
@@ -85,7 +108,7 @@ class S3Settings(BaseModel):
     )
     secret_access_key: str | None = Field(
         None,
-        description="If not set, AWS SDK auto-discovery will be used (envvar `AWS_SECRET_ACCESS_KEY`).",  # noqa: E501
+        description="If not set, AWS SDK auto-discovery will be used (envvar `AWS_SECRET_ACCESS_KEY`).",
     )
     allow_http: bool = Field(False, description="Allow connecting over HTTP.")
     allow_invalid_certificates: bool = Field(
@@ -127,10 +150,7 @@ class Settings(BaseSettings):
         PostgresDsn("postgresql://app:app@localhost:5432/app"),
         title="Database URI",
         description="Must include the database name.",
-        examples=[
-            "postgresql://app:app@localhost:5432/app",
-            "postgresql://{username}:{password}@{hostname}:{port}/{dbname}",
-        ],
+        examples=["postgresql://{username}:{password}@{hostname}:{port}/{dbname}"],
     )
 
     oidc_url: AnyHttpUrl = Field(

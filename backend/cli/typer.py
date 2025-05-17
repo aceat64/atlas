@@ -6,7 +6,7 @@ from typing import Annotated
 import typer
 import uvicorn
 from pydantic import ValidationError
-from rich import print, print_json
+from rich import print_json
 
 from app.core.config import Settings
 from app.core.logging import setup_logging
@@ -56,7 +56,15 @@ def config() -> None:
 
 @app.command(help="View the configuration schema.")
 def config_schema() -> None:
-    print(Settings().model_json_schema())
+    print_json(data=Settings().model_json_schema())
+
+
+@app.command(help="Generate an example TOML config file.")
+def config_example() -> None:
+    from cli.toml import json_schema_to_toml
+
+    schema = Settings().model_json_schema()
+    print(json_schema_to_toml(schema))
 
 
 @app.callback()
