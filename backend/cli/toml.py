@@ -28,36 +28,8 @@ def toml_serialize_value(value: Any) -> str:
         # Handle empty list
         if not value:
             return "[]"
-
-        # Check if all items are of the same simple type (str, int, float, bool)
-        all_simple = all(isinstance(item, str | int | float | bool) for item in value)
-
-        # For simple types, use inline array format
-        if all_simple:
-            items = []
-            for item in value:
-                if isinstance(item, str):
-                    # Escape special characters in strings
-                    escaped = item.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("\t", "\\t")
-                    items.append(f'"{escaped}"')
-                elif isinstance(item, bool):
-                    items.append("true" if item else "false")
-                else:
-                    items.append(str(item))
-
-            # For string arrays, add extra space after commas for readability
-            return f"[{', '.join(items)}]"
-
-        # For complex types (nested arrays, objects), use multiline format
-        else:
-            result = ["["]
-            for item in value:
-                serialized = toml_serialize_value(item)
-                # Indent each line of the serialized item
-                indented = "  " + serialized.replace("\n", "\n  ")
-                result.append(indented + ",")
-            result.append("]")
-            return "\n".join(result)
+        items = [toml_serialize_value(item) for item in value]
+        return f"[{', '.join(items)}]"
 
     # For unsupported types, just use string representation
     return f'"{value!s}"'
@@ -333,3 +305,21 @@ def json_schema_to_toml(schema: dict[str, Any]) -> str:
             process_property(prop_name, prop_schema, "")
 
     return "\n".join(result)
+
+
+def dict_to_toml(data: dict[str, Any]) -> str:
+    def process_dict(data: dict[str, Any], name: str = "") -> list[str]:
+        lines = []
+        if name:
+            lines.append(f"\n[{name}]")
+        children = []
+        for key, val in data.items():
+            if isinstance(val, dict):
+                children.append(key)
+            elif val is not None:
+                lines.append(f"{key} = {toml_serialize_value(val)}")
+        for child in children:
+            lines.extend(process_dict(data[child], child))
+        return lines
+
+    return "\n".join(process_dict(data))

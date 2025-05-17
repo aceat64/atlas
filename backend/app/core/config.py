@@ -119,7 +119,7 @@ class Settings(BaseSettings):
     """Application settings"""
 
     # Look for and load settings from specific toml files
-    model_config = SettingsConfigDict(env_prefix="ATLAS_", env_nested_delimiter="__")
+    model_config = SettingsConfigDict(env_prefix="ATLAS_", env_nested_delimiter="_", env_nested_max_split=1)
 
     @classmethod
     def settings_customise_sources(
