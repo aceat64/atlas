@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 import httpx
@@ -15,6 +15,10 @@ from pydantic import (
 )
 
 log = structlog.get_logger("oidc")
+
+
+def now_utc() -> datetime:
+    return datetime.now(tz=UTC)
 
 
 class AuthBaseModel(BaseModel):
@@ -791,7 +795,7 @@ class OpenIDConnectDiscovery(AuthBaseModel):
     """OpenID Provider Metadata"""
     jwks: Annotated[PyJWKSet, GetPydanticSchema(lambda _s, h: h(Any))]
     """JSON Web Key Set"""
-    last_updated: datetime = Field(default_factory=datetime.now)
+    last_updated: datetime = Field(default_factory=now_utc)
     """Time when the discovery data was fetched"""
 
     def __init__(self, discovery_url: AnyHttpUrl, **data: Any):
@@ -878,6 +882,6 @@ class OpenIDConnectDiscovery(AuthBaseModel):
                 jwks_data = jwks_response.json()
 
             self.jwks = PyJWKSet.from_dict(jwks_data)
-            self.last_updated = datetime.now()
+            self.last_updated = now_utc()
         except Exception as exc:
             raise OpenIDConnectDiscoveryError(f"Failed to refresh JWKS: {exc}") from exc

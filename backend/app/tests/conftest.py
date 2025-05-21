@@ -1,5 +1,5 @@
+import datetime
 from collections.abc import Generator
-from datetime import datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -54,7 +54,7 @@ def db() -> Generator[Session]:
 
 
 def override_get_token_payload() -> TokenPayload:
-    now = datetime.timestamp(datetime.now())
+    now = datetime.datetime.timestamp(datetime.datetime.now(tz=datetime.UTC))
     return TokenPayload(
         iss="https://authentik/application/o/atlas/",
         sub="testuser",

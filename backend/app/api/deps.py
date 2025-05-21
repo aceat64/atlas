@@ -1,4 +1,3 @@
-from collections.abc import AsyncGenerator
 from typing import Annotated, Any
 
 import structlog
@@ -15,7 +14,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth.oidc import OpenIDConnectDiscovery, TokenPayload
 from app.core.config import Settings
-from app.core.db import async_engine
+from app.core.db import get_db
+from app.core.s3 import get_object_store
 from app.models import Message
 from app.models.user import User
 
@@ -24,31 +24,11 @@ default_responses: dict[int | str, dict[str, Any]] = {404: {"model": Message}}
 log = structlog.stdlib.get_logger("app")
 settings = Settings()
 
-
-async def get_db() -> AsyncGenerator[AsyncSession]:
-    async with AsyncSession(async_engine) as session:
-        yield session
-
-
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
 """Get a database session instance"""
 
-
-def get_object_store() -> S3Store:
-    return S3Store(
-        settings.s3.bucket_name,
-        prefix=settings.s3.path_prefix,
-        aws_endpoint=str(settings.s3.endpoint),
-        access_key_id=settings.s3.access_key_id,
-        secret_access_key=settings.s3.secret_access_key,
-        client_options={
-            "allow_http": settings.s3.allow_http,
-            "allow_invalid_certificates": settings.s3.allow_invalid_certificates,
-        },
-    )
-
-
 ObjectStoreDep = Annotated[S3Store, Depends(get_object_store)]
+"""Get an S3Store instance"""
 
 
 openid_connect = OpenIdConnect(openIdConnectUrl=str(settings.oidc_url), auto_error=False)

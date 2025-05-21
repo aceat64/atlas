@@ -160,5 +160,6 @@ class Settings(BaseSettings):
     @field_validator("db_uri")
     def check_db_name(cls, v: PostgresDsn) -> PostgresDsn:
         """Require a database name"""
-        assert v.path and len(v.path) > 1, "database must be provided"
+        if v.path and len(v.path) > 1:
+            raise ValueError("database must be provided")
         return v

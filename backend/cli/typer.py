@@ -77,7 +77,7 @@ def main(
     config_file: Annotated[
         Path | None,
         typer.Option(
-            show_default=", ".join([file for file in default_config_files]),
+            show_default=", ".join(default_config_files),
             envvar="ATLAS_CONFIG_FILE",
             exists=True,
             file_okay=True,

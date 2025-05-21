@@ -7,7 +7,7 @@ from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.instrumentation.threading import ThreadingInstrumentor
-from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics import MeterProvider, TraceBasedExemplarFilter
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
@@ -51,4 +51,6 @@ def setup_telemetry(settings: Settings) -> None:
         log.info(f"Metrics available at http://{settings.metrics.host}:{settings.metrics.port}/metrics")
 
     reader = PrometheusMetricReader()
-    metrics.set_meter_provider(MeterProvider(metric_readers=[reader], resource=resource))
+    metrics.set_meter_provider(
+        MeterProvider(metric_readers=[reader], resource=resource, exemplar_filter=TraceBasedExemplarFilter())
+    )

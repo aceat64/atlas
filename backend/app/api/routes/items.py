@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query
@@ -119,7 +119,7 @@ async def update_item(*, session: SessionDep, current_user: CurrentUser, item_id
 
     update_dict = item_in.model_dump(exclude_unset=True)
     item.sqlmodel_update(update_dict)
-    item.updated_at = datetime.now()
+    item.updated_at = datetime.datetime.now(tz=datetime.UTC)
     session.add(item)
     await session.commit()
     await session.refresh(item)

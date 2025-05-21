@@ -11,15 +11,15 @@ dependencies = [
     "fastapi[standard]>=0.115.12,<0.116.0",
     "httpx>=0.28.1",
     "obstore>=0.6.0",
-    "opentelemetry-distro==0.53b1",
+    "opentelemetry-distro==0.54b1",
     "opentelemetry-exporter-otlp>=1.31.1",
-    "opentelemetry-exporter-prometheus>=0.53b1",
-    "opentelemetry-instrumentation-fastapi==0.53b1",
-    "opentelemetry-instrumentation-httpx==0.53b1",
-    "opentelemetry-instrumentation-logging==0.53b1",
-    "opentelemetry-instrumentation-sqlalchemy==0.53b1",
-    "opentelemetry-instrumentation-threading==0.53b1",
-    "opentelemetry-semantic-conventions>=0.53b1",
+    "opentelemetry-exporter-prometheus>=0.54b1",
+    "opentelemetry-instrumentation-fastapi==0.54b1",
+    "opentelemetry-instrumentation-httpx==0.54b1",
+    "opentelemetry-instrumentation-logging==0.54b1",
+    "opentelemetry-instrumentation-sqlalchemy==0.54b1",
+    "opentelemetry-instrumentation-threading==0.54b1",
+    "opentelemetry-semantic-conventions>=0.54b1",
     "psycopg[binary]>=3.2.7",
     "pydantic>=2.11.4",
     "pydantic-settings>=2.9.1",
@@ -80,4 +80,19 @@ select = [
     "RUF",
     # flake8-async
     "ASYNC",
+    # flake8-bandit
+    "S",
+    # flake8-comprehensions
+    "C4",
+    # flake8-datetimez
+    "DTZ",
+]
+ignore = [
+    "S104"  # Possible binding to all interfaces
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = [
+    "S101",  # Use of `assert` detected
+    "S311",  # Standard pseudo-random generators are not suitable for cryptographic purposes
 ]
