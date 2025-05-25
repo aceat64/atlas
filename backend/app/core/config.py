@@ -161,5 +161,5 @@ class Settings(BaseSettings):
     def check_db_name(cls, v: PostgresDsn) -> PostgresDsn:
         """Require a database name"""
         if v.path and len(v.path) > 1:
-            raise ValueError("database must be provided")
-        return v
+            return v
+        raise ValueError("database must be provided")
