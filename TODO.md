@@ -21,7 +21,6 @@
 - [ ] [Generate clients](https://fastapi.tiangolo.com/advanced/generate-clients/)
 - [x] Improve error message for invalid config
 - [x] CLI command to generate an example toml config file
-- [ ] Try using pydantic-settings CLI instead of Typer
 
 ## Frontend
 
