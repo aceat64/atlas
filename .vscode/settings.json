@@ -7,7 +7,8 @@
     "**/.pytest_cache": true,
     "**/htmlcov": true,
     "**/.coverage": true,
-    "**/node_modules": true
+    "**/node_modules": true,
+    "**/.react-router": true
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[python]": {

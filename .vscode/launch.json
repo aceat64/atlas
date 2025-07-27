@@ -5,13 +5,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug FastAPI Project backend: Python Debugger",
+      "name": "Debug Backend",
       "type": "debugpy",
       "request": "launch",
-      "module": "uvicorn",
-      "args": ["app.main:app", "--reload"],
+      "module": "cli",
+      "args": ["serve", "--reload"],
       "cwd": "${workspaceFolder}/backend",
-      "jinja": true,
       "envFile": "${workspaceFolder}/.env"
     },
     {

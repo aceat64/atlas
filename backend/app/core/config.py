@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Annotated, Literal, Self
 
 from pydantic import (
@@ -17,6 +18,11 @@ from pydantic_settings import (
     SettingsConfigDict,
     TomlConfigSettingsSource,
 )
+
+default_config_files = [
+    "/config/settings.toml",
+    f"{Path(__file__).parent.parent.parent.resolve()}/settings.toml",
+]
 
 
 class ServerSettings(BaseModel):
@@ -133,7 +139,7 @@ class Settings(BaseSettings):
         # Load settings from environment variables and toml files.
         return env_settings, TomlConfigSettingsSource(
             settings_cls,
-            toml_file=os.environ.get("ATLAS_CONFIG_FILE", ["/config/settings.toml", "settings.toml"]),
+            toml_file=os.environ.get("ATLAS_CONFIG_FILE", default_config_files),
         )
 
     db_uri: PostgresDsn = Field(

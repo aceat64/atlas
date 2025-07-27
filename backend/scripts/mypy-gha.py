@@ -2,13 +2,16 @@
 Takes mypy json from stdin and converts to GitHub annotation output.
 
 Example usage:
-uv run mypy app --output json | uv run scripts/mypy-gha.py
+uv run mypy --output json app | uv run scripts/mypy-gha.py
 """
 
 import json
 import sys
 
 for line in sys.stdin:
+    if not line.startswith("{"):
+        continue
+
     error = json.loads(line)
 
     command = "error" if error["severity"] == "error" else "notice"
