@@ -11,10 +11,10 @@ def load_config() -> Settings:
     try:
         return Settings()
     except ValidationError as e:
-        err_console.print(f"Invalid configuration: {e.error_count()} validation errors")
+        err_console.print(f"[red underline]Invalid configuration:[/red underline] {e.error_count()} validation errors")
         for error in e.errors():
-            err_console.print()
-            err_console.print(".".join([str(value) for value in error["loc"]]))
-            err_console.print(f"\tInput: {error['input']}")
+            loc = ".".join([str(value) for value in error["loc"]])
+            err_console.print(f"\n[cyan]{loc}[/cyan]")
+            err_console.print(f"\tInput: [red]{error['input']}[/red]")
             err_console.print(f"\t{error['msg']}")
         raise typer.Exit(1) from None
