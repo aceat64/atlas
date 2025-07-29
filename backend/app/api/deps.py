@@ -12,8 +12,8 @@ from sqlalchemy.exc import NoResultFound
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.auth.oidc import OpenIDConnectDiscovery, TokenPayload
-from app.core.config import Settings
+from app.auth.oidc import Provider, TokenPayload
+from app.core.config import settings
 from app.core.db import get_db
 from app.core.s3 import get_object_store
 from app.models import Message
@@ -22,7 +22,6 @@ from app.models.user import User
 default_responses: dict[int | str, dict[str, Any]] = {404: {"model": Message}}
 
 log = structlog.stdlib.get_logger("app")
-settings = Settings()
 
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
 """Get a database session instance"""
@@ -31,11 +30,11 @@ ObjectStoreDep = Annotated[S3Store, Depends(get_object_store)]
 """Get an S3Store instance"""
 
 
-openid_connect = OpenIdConnect(openIdConnectUrl=str(settings.oidc_url), auto_error=False)
-openid_provider = OpenIDConnectDiscovery(settings.oidc_url)
+oidc_scheme = OpenIdConnect(openIdConnectUrl=str(settings.oidc_url), auto_error=False)
+oidc_provider = Provider(settings.oidc_url)
 
 
-async def get_token_payload(authorization: Annotated[str, Depends(openid_connect)]) -> TokenPayload:
+async def get_token_payload(authorization: Annotated[str, Depends(oidc_scheme)]) -> TokenPayload:
     try:
         scheme, token = get_authorization_scheme_param(authorization)
         if scheme.lower() != "bearer":
@@ -46,7 +45,7 @@ async def get_token_payload(authorization: Annotated[str, Depends(openid_connect
                 detail="Not authenticated",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        payload = openid_provider.decode_access_token(token)
+        payload = oidc_provider.decode_access_token(token)
         log.debug("Validated access token", token=payload)
         return TokenPayload.model_validate(payload)
     except (InvalidTokenError, ValidationError) as exc:

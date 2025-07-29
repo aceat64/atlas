@@ -1,3 +1,5 @@
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from importlib.metadata import metadata
 
 from fastapi import FastAPI
@@ -7,13 +9,23 @@ from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
-from app.core.config import Settings
+from app.core.config import settings
 from app.core.exceptions import dbapi_exception_handler, sqlalchemy_exception_handler
+from app.core.logging import setup_logging
 from app.core.telemetry import setup_telemetry
 from app.utils import generate_unique_route_id
 
 project_metadata = metadata("atlas")
-settings = Settings()
+
+setup_logging()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+    # run before app start-up
+    yield
+    # run after app start-up
+
 
 app = FastAPI(
     title="ATLAS",
@@ -32,6 +44,7 @@ app = FastAPI(
         DBAPIError: dbapi_exception_handler,
         SQLAlchemyError: sqlalchemy_exception_handler,
     },
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -41,9 +54,9 @@ app.add_middleware(
     allow_methods=settings.cors.allow_methods,
     allow_headers=settings.cors.allow_headers,
 )
-
 add_pagination(app)
-app.include_router(api_router)
 
-setup_telemetry(settings)
-FastAPIInstrumentor.instrument_app(app)
+if setup_telemetry():
+    FastAPIInstrumentor.instrument_app(app)
+
+app.include_router(api_router)

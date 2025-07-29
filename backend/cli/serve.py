@@ -3,17 +3,15 @@ from typing import Annotated
 import typer
 import uvicorn
 
-from app.core.logging import setup_logging
-
-from .config.utils import load_config
+from app.core.config import settings
+from cli.config.utils import load_config
 
 cli_app = typer.Typer()
 
 
 @cli_app.command(help="Run the ATLAS backend.")
-def serve(reload: Annotated[bool, typer.Option()] = False) -> None:
-    settings = load_config()
-    setup_logging(settings)
+def serve(ctx: typer.Context, reload: Annotated[bool, typer.Option()] = False) -> None:
+    load_config(ctx.obj["config_file"])
     uvicorn.run(
         "app.main:app",
         host=settings.server.host,
@@ -21,5 +19,5 @@ def serve(reload: Annotated[bool, typer.Option()] = False) -> None:
         uds=settings.server.uds,
         forwarded_allow_ips=settings.server.forwarded_allow_ips,
         reload=reload,
-        log_config=None,  # We already setup logging and don't want uvicorn to mess it up
+        log_config=None,  # We setup logging ourselves and don't want uvicorn to mess it up
     )

@@ -1,8 +1,6 @@
 from obstore.store import S3Store
 
-from app.core.config import Settings
-
-settings = Settings()
+from app.core.config import settings
 
 
 def get_object_store() -> S3Store:

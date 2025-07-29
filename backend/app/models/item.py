@@ -1,7 +1,9 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Annotated, Any
 
+import structlog
+from pydantic import AfterValidator, ValidationInfo
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Column, DateTime, Field, Identity, Relationship, SQLModel, func
 
@@ -9,6 +11,13 @@ from .attachment import Attachment, AttachmentPublic
 from .collection import Collection, CollectionPublic
 from .stack import Stack, StackPublic
 from .tag import ItemTagLink, Tag, TagPublic
+
+log = structlog.stdlib.get_logger("app")
+
+
+def collection_exists(value: int, info: ValidationInfo) -> int:
+    log.info(f"Checking if collection_id {value} exists", info=info)
+    return value
 
 
 class ItemType(str, Enum):
@@ -25,7 +34,9 @@ class ItemBase(SQLModel):
 
     title: str = Field(min_length=1, max_length=255)
     item_type: ItemType
-    collection_id: int | None = Field(default=None, foreign_key="collection.id", ondelete="SET NULL")
+    collection_id: Annotated[int | None, AfterValidator(collection_exists)] = Field(
+        default=None, foreign_key="collection.id", ondelete="SET NULL"
+    )
     stack_id: int | None = Field(default=None, foreign_key="stack.id", ondelete="SET NULL")
     shelf: int | None = None
     slot: int | None = None

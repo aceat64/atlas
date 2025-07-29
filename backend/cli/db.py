@@ -4,18 +4,18 @@ from typing import Annotated
 import typer
 
 from app.core.logging import setup_logging
-
-from .config.utils import load_config
+from cli.config.utils import load_config
 
 cli_app = typer.Typer(help="Database migrations and tools.")
 
 
 @cli_app.command(help="Update database to latest schema.")
-def migrate(revision: Annotated[str, typer.Argument()] = "head") -> None:
+def migrate(ctx: typer.Context, revision: Annotated[str, typer.Argument()] = "head") -> None:
     from alembic import command
     from alembic.config import Config
 
-    setup_logging(load_config())
+    load_config(ctx.obj["config_file"])
+    setup_logging()
     alembic_cfg = Config(f"{Path(__file__).parent.parent.resolve()}/alembic.ini")
     command.upgrade(alembic_cfg, revision)
 

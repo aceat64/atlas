@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from typing import Annotated, Literal, Self
 
 from pydantic import (
@@ -18,11 +17,6 @@ from pydantic_settings import (
     SettingsConfigDict,
     TomlConfigSettingsSource,
 )
-
-default_config_files = [
-    "/config/settings.toml",
-    f"{Path(__file__).parent.parent.parent.resolve()}/settings.toml",
-]
 
 
 class ServerSettings(BaseModel):
@@ -56,10 +50,10 @@ class LogSettings(BaseModel):
 class TelemetrySettings(BaseModel):
     """Telemetry"""
 
-    endpoint: AnyUrl | None = Field(
+    otel_endpoint: AnyUrl | None = Field(
         None,
         examples=["http://localhost:4318/v1/traces"],
-        description="OTLP endpoint",
+        description="OTLP endpoint. Disabled if set to None.",
     )
     console: bool = Field(
         False,
@@ -67,15 +61,26 @@ class TelemetrySettings(BaseModel):
     )
 
 
+class PrometheusSettings(BaseModel):
+    """Prometheus exporter"""
+
+    host: str | None = Field(
+        "0.0.0.0",
+        description="Bind socket to this host. Disabled if set to None.",
+        examples=["127.0.0.1"],
+    )
+    port: int = Field(9090, description="Bind socket to this port.")
+
+
 class MetricsSettings(BaseModel):
     """Metrics"""
 
-    host: str | None = Field(
-        "127.0.0.1",
-        description="Bind socket to this host. Disabled if set to None.",
-        examples=["0.0.0.0"],
+    otel_endpoint: AnyUrl | None = Field(
+        None,
+        examples=["http://localhost:4318/v1/metrics"],
+        description="OTLP endpoint. Disabled if set to None.",
     )
-    port: int = Field(9090, description="Bind socket to this port.")
+    prometheus: PrometheusSettings = PrometheusSettings()
 
 
 class CorsSettings(BaseModel):
@@ -121,11 +126,14 @@ class S3Settings(BaseModel):
         return self
 
 
-class Settings(BaseSettings):
-    """Application settings"""
-
-    # Look for and load settings from specific toml files
-    model_config = SettingsConfigDict(env_prefix="ATLAS_", env_nested_delimiter="_", env_nested_max_split=1)
+class AppSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        title="ATLAS Application Settings",
+        toml_file=os.environ.get("ATLAS_CONFIG_FILE", ["settings.toml", "/config/atlas.toml"]),
+        env_prefix="ATLAS_",
+        env_nested_delimiter="_",
+        env_nested_max_split=1,
+    )
 
     @classmethod
     def settings_customise_sources(
@@ -137,10 +145,7 @@ class Settings(BaseSettings):
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         # Load settings from environment variables and toml files.
-        return env_settings, TomlConfigSettingsSource(
-            settings_cls,
-            toml_file=os.environ.get("ATLAS_CONFIG_FILE", default_config_files),
-        )
+        return env_settings, TomlConfigSettingsSource(settings_cls)
 
     db_uri: PostgresDsn = Field(
         PostgresDsn("postgresql://app:app@localhost:5432/app"),
@@ -169,3 +174,6 @@ class Settings(BaseSettings):
         if v.path and len(v.path) > 1:
             return v
         raise ValueError("database must be provided")
+
+
+settings: AppSettings = AppSettings.model_construct()

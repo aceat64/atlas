@@ -1,24 +1,14 @@
 from datetime import UTC, datetime
-from typing import Annotated, Any
+from typing import Any
 
 import httpx
 import jwt
 import structlog
 from jwt import PyJWKSet
-from pydantic import (
-    AnyHttpUrl,
-    BaseModel,
-    ConfigDict,
-    Field,
-    GetPydanticSchema,
-    model_validator,
-)
+from jwt.exceptions import InvalidTokenError
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field
 
 log = structlog.get_logger("oidc")
-
-
-def now_utc() -> datetime:
-    return datetime.now(tz=UTC)
 
 
 class AuthBaseModel(BaseModel):
@@ -788,57 +778,53 @@ class ProviderMetadata(AuthBaseModel):
     """
 
 
-class OpenIDConnectDiscovery(AuthBaseModel):
+class Provider:
     discovery_url: AnyHttpUrl
     """The OpenID Connect discovery URL"""
-    metadata: ProviderMetadata
+    _metadata: ProviderMetadata | None = None
     """OpenID Provider Metadata"""
-    jwks: Annotated[PyJWKSet, GetPydanticSchema(lambda _s, h: h(Any))]
+    _jwks: PyJWKSet | None = None
     """JSON Web Key Set"""
-    last_updated: datetime = Field(default_factory=now_utc)
+    last_updated: datetime | None = None
     """Time when the discovery data was fetched"""
 
-    def __init__(self, discovery_url: AnyHttpUrl, **data: Any):
-        # If only discovery_url is provided as a positional argument,
-        # convert it to the expected format
-        data["discovery_url"] = discovery_url
-        super().__init__(**data)
+    def __init__(self, discovery_url: AnyHttpUrl):
+        self.discovery_url = discovery_url
 
-    @model_validator(mode="before")
-    @classmethod
-    def fetch_discovery_and_jwks(cls, data: dict[str, Any]) -> dict[str, Any]:
-        if isinstance(data, dict) and "discovery_url" in data:
-            discovery_url = data["discovery_url"]
-            try:
-                log.info("Fetching OIDC Discovery document", url=str(discovery_url))
-                # Fetch the discovery document
-                with httpx.Client(timeout=10.0) as client:
-                    # Get discovery document
-                    discovery_response = client.get(str(discovery_url))
-                    discovery_response.raise_for_status()
-                    metadata = discovery_response.json()
+    def get_metadata(self) -> ProviderMetadata:
+        if self._metadata:
+            return self._metadata
 
-                    # Get JWKS using the jwks_uri from the discovery document
-                    jwks_uri = metadata.get("jwks_uri")
-                    if not jwks_uri:
-                        raise KeyError("jwks_uri not found in discovery document")
+        discovery_url = str(self.discovery_url)
+        log.info("Fetching OIDC Discovery document", url=discovery_url)
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                discovery_response = client.get(discovery_url)
+                discovery_response.raise_for_status()
+                self._metadata = ProviderMetadata.model_validate(discovery_response.json())
+                log.info("Provider metadata updated", issuer=str(self._metadata.issuer))
+                return self._metadata
+        except Exception as exc:
+            raise OpenIDConnectDiscoveryError(f"Failed to fetch OpenID Connect discovery document: {exc}") from exc
 
-                    log.info("Fetching JWKS document", url=str(jwks_uri))
-                    jwks_response = client.get(jwks_uri)
-                    jwks_response.raise_for_status()
-                    jwks_data = jwks_response.json()
+    def get_jwks(self, refresh: bool = False) -> PyJWKSet:
+        if self._jwks and not refresh:
+            return self._jwks
 
-                # Construct the result with nested structure
-                return {
-                    "discovery_url": discovery_url,
-                    "metadata": metadata,
-                    "jwks": PyJWKSet.from_dict(jwks_data),
-                }
-            except Exception as exc:
-                raise OpenIDConnectDiscoveryError(
-                    f"Failed to fetch OpenID Connect discovery document or JWKS: {exc}"
-                ) from exc
-        return data
+        metadata = self.get_metadata()
+        jwks_uri = str(metadata.jwks_uri)
+
+        log.info("Fetching JWKS document", url=jwks_uri)
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                jwks_response = client.get(jwks_uri)
+                jwks_response.raise_for_status()
+                self._jwks = PyJWKSet.from_dict(jwks_response.json())
+                self.last_updated = datetime.now(tz=UTC)
+                log.info("JWKS updated", key_count=len(self._jwks.keys))
+                return self._jwks
+        except Exception as exc:
+            raise OpenIDConnectDiscoveryError(f"Failed to fetch JWKS document: {exc}") from exc
 
     def decode_access_token(self, token: str, audience: str | None = None) -> Any:
         """
@@ -852,36 +838,29 @@ class OpenIDConnectDiscovery(AuthBaseModel):
             Dict[str, Any]: The decoded token payload if valid
 
         Raises:
-            ValueError: If the token is invalid for any reason
+            InvalidTokenError: If the token is invalid for any reason
         """
         # Get the header without verifying the token
         header = jwt.get_unverified_header(token)
         kid = header.get("kid")
 
         if not kid:
-            raise ValueError("Token header does not contain a Key ID (kid)")
+            raise InvalidTokenError("Token header does not contain a Key ID (kid)")
 
+        metadata = self.get_metadata()
+        jwks = self.get_jwks()
         # Verify and decode the token using the key
         return jwt.decode(
             token,
-            key=self.jwks[kid],
-            algorithms=self.jwks[kid].algorithm_name,
+            key=jwks[kid],
+            algorithms=jwks[kid].algorithm_name,
             audience=audience,
-            issuer=str(self.metadata.issuer),
+            issuer=str(metadata.issuer),
             options={"require": ["exp", "iat"], "verify_aud": audience is not None},
         )
 
-    def refresh_jwks(self) -> None:
-        """Refresh the JWKS data from the jwks_uri endpoint."""
+    def update_jwks(self) -> None:
+        """Update the JWKS data from the jwks_uri endpoint."""
 
-        log.info("Refreshing JWKS document", url=str(self.metadata.jwks_uri))
-        try:
-            with httpx.Client(timeout=10.0) as client:
-                jwks_response = client.get(str(self.metadata.jwks_uri))
-                jwks_response.raise_for_status()
-                jwks_data = jwks_response.json()
-
-            self.jwks = PyJWKSet.from_dict(jwks_data)
-            self.last_updated = now_utc()
-        except Exception as exc:
-            raise OpenIDConnectDiscoveryError(f"Failed to refresh JWKS: {exc}") from exc
+        log.info("Updating JWKS")
+        self.get_jwks(refresh=True)

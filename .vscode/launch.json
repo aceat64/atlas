@@ -9,7 +9,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "cli",
-      "args": ["serve", "--reload"],
+      "args": ["serve"],
       "cwd": "${workspaceFolder}/backend",
       "envFile": "${workspaceFolder}/.env"
     },

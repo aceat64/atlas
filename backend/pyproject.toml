@@ -28,6 +28,7 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.40",
     "sqlmodel>=0.0.24",
     "structlog>=25.3.0",
+    "tomlkit>=0.13.3",
 ]
 
 [dependency-groups]
