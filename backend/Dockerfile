@@ -2,7 +2,7 @@ FROM python:3.13-slim AS builder
 
 # Install uv
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
-COPY --from=ghcr.io/astral-sh/uv:0.6.3 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.8.14@sha256:f3660c56d5b08d6c516360981bedc439f499b9bf37f46a216018da3777a74011 /uv /uvx /bin/
 
 # Changing the default UV_LINK_MODE silences warnings about not being able to
 # use hard links since the cache and sync target are on separate file systems.
