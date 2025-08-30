@@ -21,7 +21,7 @@ services:
       - ./backend/settings.localdev.toml:/config/settings.toml
 
   grafana:
-    image: grafana/otel-lgtm
+    image: grafana/otel-lgtm@sha256:9f7d636403222fd38ffb804b1b35da97b2c620ff873d331ce72e9f9faaa4547d
     restart: always
     ports:
       - "3000:3000"
@@ -29,7 +29,7 @@ services:
       - "4318:4318"
 
   postgres:
-    image: postgres:latest
+    image: postgres:latest@sha256:29e0bb09c8e7e7fc265ea9f4367de9622e55bae6b0b97e7cce740c2d63c2ebc0
     restart: always
     environment:
       POSTGRES_USER: app
@@ -41,7 +41,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
   minio:
-    image: bitnami/minio:latest
+    image: bitnami/minio:latest@sha256:6dabb4a2088c9a79908de3bc05f4586c23ad2182c8908e7e3acbf61c1467fb20
     environment:
       - MINIO_FORCE_NEW_KEYS=yes
       - MINIO_ROOT_USER=minio
