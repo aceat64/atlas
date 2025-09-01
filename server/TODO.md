@@ -1,7 +1,5 @@
 # TODO
 
-## Backend
-
 - [x] Finish out routes
   - [x] Collections
   - [x] Rooms
@@ -21,10 +19,6 @@
 - [ ] [Generate clients](https://fastapi.tiangolo.com/advanced/generate-clients/)
 - [x] Improve error message for invalid config
 - [x] CLI command to generate an example toml config file
-
-## Frontend
-
-- [ ] Start
 
 ## CI/CD
 

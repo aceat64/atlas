@@ -1,6 +1,6 @@
-# Backend
+# Server
 
-ATLAS backend api.
+ATLAS server.
 
 ## Libraries
 

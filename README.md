@@ -1,9 +1,5 @@
 # ATLAS (All-media Tracking & Library Access System)
 
-## Backend
+## Server
 
-See [backend/README.md](backend/README.md).
-
-## Frontend
-
-See [frontend/README.md](frontend/README.md).
+See [server/README.md](server/README.md).

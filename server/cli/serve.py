@@ -9,7 +9,7 @@ from cli.config.utils import load_config
 cli_app = typer.Typer()
 
 
-@cli_app.command(help="Run the ATLAS backend.")
+@cli_app.command(help="Run the ATLAS server.")
 def serve(ctx: typer.Context, reload: Annotated[bool, typer.Option()] = False) -> None:
     load_config(ctx.obj["config_file"])
     uvicorn.run(

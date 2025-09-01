@@ -3,7 +3,7 @@ name: ATLAS
 services:
   atlas:
     build:
-      context: ./backend/
+      context: .
     depends_on:
       - postgres
       - minio
@@ -18,7 +18,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend/settings.localdev.toml:/config/settings.toml
+      - ./settings.localdev.toml:/config/settings.toml
 
   grafana:
     image: grafana/otel-lgtm@sha256:9f7d636403222fd38ffb804b1b35da97b2c620ff873d331ce72e9f9faaa4547d
