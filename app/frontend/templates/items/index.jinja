@@ -1,0 +1,10 @@
+{% extends 'base.jinja' %}
+
+{% block title %}ATLAS: Items{% endblock title %}
+
+{% block body %}
+  <p>HTMX Request to `/items/list` endpoint</p>
+  <button type="button" hx-get="/items/list" hx-swap="outerHTML">
+    Item List Data
+  </button>
+{% endblock body %}

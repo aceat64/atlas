@@ -1,0 +1,104 @@
+[project]
+name = "atlas"
+version = "0.1.0"
+description = "All-media Tracking & Library Access System"
+authors = [{ name = "Andrew LeCody" }]
+readme = "DOCS.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "alembic>=1.15.2",
+    "authlib>=1.6.3",
+    "fastapi-pagination>=0.13.1",
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.116.1,<0.117.0",
+    "fasthx[jinja]>=2.3.3",
+    "httpx>=0.28.1",
+    "itsdangerous>=2.2.0",
+    "obstore>=0.6.0",
+    "opentelemetry-distro==0.54b1",
+    "opentelemetry-exporter-otlp>=1.31.1",
+    "opentelemetry-exporter-prometheus>=0.54b1",
+    "opentelemetry-instrumentation-fastapi==0.54b1",
+    "opentelemetry-instrumentation-httpx==0.54b1",
+    "opentelemetry-instrumentation-jinja2>=0.54b1",
+    "opentelemetry-instrumentation-logging==0.54b1",
+    "opentelemetry-instrumentation-sqlalchemy==0.54b1",
+    "opentelemetry-instrumentation-threading==0.54b1",
+    "opentelemetry-semantic-conventions>=0.54b1",
+    "psycopg[binary]>=3.2.7",
+    "pydantic>=2.11.4",
+    "pydantic-settings>=2.9.1",
+    "pyhumps>=3.8.0",
+    "pyjwt[crypto]>=2.10.1",
+    "sqlalchemy[asyncio]>=2.0.40",
+    "sqlmodel>=0.0.24",
+    "structlog>=25.3.0",
+    "tomlkit>=0.13.3",
+]
+
+[dependency-groups]
+dev = [
+    "coverage>=7.8.0",
+    "mypy>=1.15.0",
+    "pytest>=8.3.5",
+    "ruff>=0.11.9",
+    "types-authlib>=1.6.2.20250825",
+]
+
+[project.scripts]
+atlas-cli = "cli.main:cli_app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.mypy]
+strict = true
+exclude = ["venv", ".venv"]
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+enable_error_code = ["deprecated", "no-any-unimported", "redundant-self"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # eradicate
+    "ERA",
+    # FastAPI
+    "FAST",
+    # Ruff-specific rules
+    "RUF",
+    # flake8-async
+    "ASYNC",
+    # flake8-bandit
+    "S",
+    # flake8-comprehensions
+    "C4",
+    # flake8-datetimez
+    "DTZ",
+]
+ignore = [
+    "S104"  # Possible binding to all interfaces
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = [
+    "S101",  # Use of `assert` detected
+    "S311",  # Standard pseudo-random generators are not suitable for cryptographic purposes
+]

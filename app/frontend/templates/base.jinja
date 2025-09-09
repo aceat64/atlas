@@ -1,0 +1,41 @@
+{#
+Base template for all pages of the application.
+
+Blocks:
+- title: For setting the page title.
+- body: For the body of the page, required.
+
+Utility containers:
+- dialog-container: The HTMX target container for dialogs.
+#}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>{% block title %}ATLAS{% endblock %}</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='tailwind.css') }}"
+      type="text/css"
+    />
+    <script
+      type="text/javascript"
+      src="{{ url_for('static', path='js/htmx.min.js') }}"
+    ></script>
+  </head>
+
+  <body>
+    <h1>{{ self.title() }}</h1>
+
+    <a href="/login">login</a>
+    <a href="/logout">logout</a>
+
+    {% block body required %}{% endblock %}
+
+    <div id="dialog-container"></div>
+  </body>
+</html>
