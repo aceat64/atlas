@@ -791,15 +791,16 @@ class Provider:
     def __init__(self, discovery_url: AnyHttpUrl):
         self.discovery_url = discovery_url
 
-    def get_metadata(self) -> ProviderMetadata:
+    async def get_metadata(self) -> ProviderMetadata:
         if self._metadata:
+            # TODO: Add cache expiry
             return self._metadata
 
         discovery_url = str(self.discovery_url)
         log.info("Fetching OIDC Discovery document", url=discovery_url)
         try:
-            with httpx.Client(timeout=10.0) as client:
-                discovery_response = client.get(discovery_url)
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                discovery_response = await client.get(discovery_url)
                 discovery_response.raise_for_status()
                 self._metadata = ProviderMetadata.model_validate(discovery_response.json())
                 log.info("Provider metadata updated", issuer=str(self._metadata.issuer))
@@ -807,17 +808,18 @@ class Provider:
         except Exception as exc:
             raise OpenIDConnectDiscoveryError(f"Failed to fetch OpenID Connect discovery document: {exc}") from exc
 
-    def get_jwks(self, refresh: bool = False) -> PyJWKSet:
+    async def get_jwks(self, refresh: bool = False) -> PyJWKSet:
         if self._jwks and not refresh:
+            # TODO: Add cache expiry
             return self._jwks
 
-        metadata = self.get_metadata()
+        metadata = await self.get_metadata()
         jwks_uri = str(metadata.jwks_uri)
 
         log.info("Fetching JWKS document", url=jwks_uri)
         try:
-            with httpx.Client(timeout=10.0) as client:
-                jwks_response = client.get(jwks_uri)
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                jwks_response = await client.get(jwks_uri)
                 jwks_response.raise_for_status()
                 self._jwks = PyJWKSet.from_dict(jwks_response.json())
                 self.last_updated = datetime.now(tz=UTC)
@@ -826,13 +828,14 @@ class Provider:
         except Exception as exc:
             raise OpenIDConnectDiscoveryError(f"Failed to fetch JWKS document: {exc}") from exc
 
-    def decode_access_token(self, token: str, audience: str | None = None) -> Any:
+    async def decode_token(self, token: str, audience: str | None = None, nonce: str | None = None) -> dict[str, Any]:
         """
-        Decode and validate a JWT access token using the JWKS data.
+        Decode and validate a JWT token using the JWKS data.
 
         Args:
             token: The JWT token to decode and validate
             audience: Optional audience to validate against
+            nonce: Optional nonce to validate against
 
         Returns:
             Dict[str, Any]: The decoded token payload if valid
@@ -845,12 +848,13 @@ class Provider:
         kid = header.get("kid")
 
         if not kid:
+            # TODO: try decoding token against every key in the jwks (optionally)
             raise InvalidTokenError("Token header does not contain a Key ID (kid)")
 
-        metadata = self.get_metadata()
-        jwks = self.get_jwks()
+        metadata = await self.get_metadata()
+        jwks = await self.get_jwks()
         # Verify and decode the token using the key
-        return jwt.decode(
+        token_payload: dict[str, Any] = jwt.decode(
             token,
             key=jwks[kid],
             algorithms=jwks[kid].algorithm_name,
@@ -859,8 +863,17 @@ class Provider:
             options={"require": ["exp", "iat"], "verify_aud": audience is not None},
         )
 
-    def update_jwks(self) -> None:
+        if nonce is not None:
+            token_nonce = token_payload.get("nonce")
+            if not token_nonce:
+                raise InvalidTokenError("Token payload does not have a nonce!")
+            if token_nonce != nonce:
+                raise InvalidTokenError("Token payload nonce does not match!")
+
+        return token_payload
+
+    async def update_jwks(self) -> None:
         """Update the JWKS data from the jwks_uri endpoint."""
 
         log.info("Updating JWKS")
-        self.get_jwks(refresh=True)
+        await self.get_jwks(refresh=True)

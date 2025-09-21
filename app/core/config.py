@@ -143,6 +143,18 @@ class FrontendSettings(BaseModel):
     cookie: CookieSettings = CookieSettings()
 
 
+class AuthSettings(BaseModel):
+    client_id: str | None = None
+    client_secret: str | None = None
+    scopes: list[str] = ["openid", "email", "profile"]
+    oidc_url: AnyHttpUrl = Field(
+        AnyHttpUrl("https://authentik/application/o/atlas/.well-known/openid-configuration"),
+        title="OIDC Discovery URL",
+        description="Must be a valid OIDC Discovery endpoint, these usually end with `/.well-known/openid-configuration`.",  # noqa: E501
+        examples=["https://authentik/application/o/atlas/.well-known/openid-configuration"],
+    )
+
+
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
         title="ATLAS Application Settings",
@@ -171,15 +183,7 @@ class AppSettings(BaseSettings):
         examples=["postgresql://{username}:{password}@{hostname}:{port}/{dbname}"],
     )
 
-    oauth2_client_id: str | None = None
-    oauth2_client_secret: str | None = None
-    oidc_url: AnyHttpUrl = Field(
-        AnyHttpUrl("https://authentik/application/o/atlas/.well-known/openid-configuration"),
-        title="OIDC Discovery URL",
-        description="Must be a valid OIDC Discovery endpoint, these usually end with `/.well-known/openid-configuration`.",  # noqa: E501
-        examples=["https://authentik/application/o/atlas/.well-known/openid-configuration"],
-    )
-
+    auth: AuthSettings = AuthSettings()
     log: LogSettings = LogSettings()
     server: ServerSettings = ServerSettings()
     s3: S3Settings = S3Settings()

@@ -20,7 +20,7 @@ default_responses: dict[int | str, dict[str, Any]] = {404: {"model": Message}}
 
 log = structlog.stdlib.get_logger("api")
 
-oidc_scheme = OpenIdConnect(openIdConnectUrl=str(settings.oidc_url), auto_error=False)
+oidc_scheme = OpenIdConnect(openIdConnectUrl=str(settings.auth.oidc_url), auto_error=False)
 
 
 async def get_token_payload(authorization: Annotated[str, Depends(oidc_scheme)]) -> TokenPayload:
@@ -34,7 +34,7 @@ async def get_token_payload(authorization: Annotated[str, Depends(oidc_scheme)])
                 detail="Not authenticated",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        payload = oidc_provider.decode_access_token(token)
+        payload = await oidc_provider.decode_token(token)
         log.debug("Validated access token", token=payload)
         return TokenPayload.model_validate(payload)
     except (InvalidTokenError, ValidationError) as exc:

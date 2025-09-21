@@ -1,12 +1,10 @@
-import datetime
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated
 
 import structlog
 from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.templating import Jinja2Templates
 from opentelemetry import trace
-from pydantic import BaseModel
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import select
 
@@ -27,38 +25,32 @@ TemplatesDep = Annotated[Jinja2Templates, Depends(get_templates)]
 """Get a jinja template instance"""
 
 
-class Cookies(BaseModel):
-    session_token: str | None = None
-
-
-async def get_session(db: DatabaseDep, cookies: Annotated[Cookies, Cookie()]) -> Session | Literal[False]:
-    if cookies.session_token is None:
+async def get_session(db: DatabaseDep, session_token: Annotated[str | None, Cookie()] = None) -> Session:
+    if session_token is None:
         log.debug("No session token cookie")
-        return False
+        return Session()
 
     try:
-        result = await db.exec(select(Session).where(Session.token == cookies.session_token))
+        result = await db.exec(select(Session).where(Session.token == session_token))
         session: Session = result.one()
     except NoResultFound:
-        log.debug("Unknown session token", session_token=cookies.session_token)
-        return False
+        log.debug("Unknown session token", session_token=session_token)
+        return Session()
 
-    if session.expires_at < datetime.datetime.now(datetime.UTC):
-        log.debug("Session expired", session_token=session.token, expired_at=session.expires_at)
-        return False
+    log.debug("Session found", session_token=session.token)
+    if session.is_active():
+        log.debug("Session active", session_token=session.token)
+        return session
 
-    if session.logged_out_at:
-        log.debug("Session was already logged out", session_token=session.token, logged_out_at=session.logged_out_at)
-        return False
-
-    return session
+    log.debug("Session is not active", session_token=session.token)
+    return Session()
 
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
 
-async def get_current_user(db: DatabaseDep, session: SessionDep, templates: TemplatesDep) -> User:
-    if not session:
+async def get_current_user(db: DatabaseDep, session: SessionDep) -> User:
+    if not session.user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
@@ -75,11 +67,10 @@ async def get_current_user(db: DatabaseDep, session: SessionDep, templates: Temp
         raise HTTPException(status_code=500, detail="An unexpected error occurred.") from exc
 
     log.debug("User found in DB", user=user)
-    if isinstance(user.id, int):
-        structlog.contextvars.bind_contextvars(user_id=user.id)
-        current_span = trace.get_current_span()
-        # ref: https://opentelemetry.io/docs/specs/semconv/attributes-registry/enduser/#end-user-attributes
-        current_span.set_attribute("enduser.id", user.id)
+    structlog.contextvars.bind_contextvars(user_id=user.id)
+    current_span = trace.get_current_span()
+    # ref: https://opentelemetry.io/docs/specs/semconv/attributes-registry/enduser/#end-user-attributes
+    current_span.set_attribute("enduser.id", str(user.id))
     return user
 
 

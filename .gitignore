@@ -314,3 +314,5 @@ pyrightconfig.json
 
 settings.localdev.toml
 settings.toml
+
+.DS_Store

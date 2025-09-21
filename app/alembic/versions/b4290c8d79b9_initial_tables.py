@@ -1,8 +1,8 @@
 """initial tables
 
-Revision ID: b187abc3ab98
+Revision ID: b4290c8d79b9
 Revises:
-Create Date: 2025-09-07 09:38:10.422478
+Create Date: 2025-09-20 17:09:12.736168
 
 """
 
@@ -14,7 +14,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "b187abc3ab98"
+revision: str = "b4290c8d79b9"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -63,17 +63,21 @@ def upgrade() -> None:
     op.create_table(
         "session",
         sa.Column("token", sa.Uuid(), nullable=False),
+        sa.Column("auth_state", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("auth_nonce", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("logged_out_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("user_id", sa.Integer(), nullable=False),
+        sa.Column("user_id", sa.Integer(), nullable=True),
         sa.Column("data", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["user.id"],
         ),
         sa.PrimaryKeyConstraint("token"),
+        sa.UniqueConstraint("auth_nonce"),
+        sa.UniqueConstraint("auth_state"),
     )
     op.create_table(
         "stack",

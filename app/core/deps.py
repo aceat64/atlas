@@ -15,4 +15,4 @@ DatabaseDep = Annotated[AsyncSession, Depends(get_db)]
 ObjectStoreDep = Annotated[S3Store, Depends(get_object_store)]
 """Get an S3Store instance"""
 
-oidc_provider = Provider(settings.oidc_url)
+oidc_provider = Provider(settings.auth.oidc_url)

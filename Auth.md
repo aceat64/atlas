@@ -23,7 +23,7 @@ For every request made to the backend:
 
 ## Frontend
 
-- Authorization Code Flow with Proof Key for Code Exchange (PKCE)
+- Authorization Code Flow
 
 ## Notes
 
@@ -40,3 +40,23 @@ For every request made to the backend:
 - <https://techdocs.akamai.com/eaa/docs/openid-connect-concepts-terms>
 - Best practices
   - [OAuth 2.0 Security Best Current Practice](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics)
+
+## Opinionated OIDC Client
+
+- MUST have an OIDC Discovery endpoint (`/.well-known/openid-configuration`)
+
+### OpenID Provider Metadata, required fields and values
+
+- `issuer`
+- `authorization_endpoint`
+- `token_endpoint`
+- `userinfo_endpoint` (maybe?)
+- `jwks_uri`
+- `scopes_supported` (maybe?)
+- `response_types_supported` must contain `code`
+- `response_modes_supported` must contain `form_post`
+- `grant_types_supported` must contain `authorization_code`
+- `subject_types_supported` must contain `public`
+- `token_endpoint_auth_methods_supported` must contain `client_secret_post`
+- `backchannel_logout_supported` must be `true`
+- `backchannel_logout_session_supported` must be `true`
