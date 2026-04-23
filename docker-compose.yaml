@@ -30,7 +30,7 @@ services:
       - "4318:4318"
 
   postgres:
-    image: postgres:latest@sha256:29e0bb09c8e7e7fc265ea9f4367de9622e55bae6b0b97e7cce740c2d63c2ebc0
+    image: postgres:latest@sha256:78481659c47e862334611ccdaf7c369c986b3046da9857112f3b309114a65fb4
     restart: always
     environment:
       POSTGRES_USER: app
