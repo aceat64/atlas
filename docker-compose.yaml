@@ -21,7 +21,7 @@ services:
       - ./settings.localdev.toml:/config/settings.toml
 
   grafana:
-    image: grafana/otel-lgtm@sha256:9f7d636403222fd38ffb804b1b35da97b2c620ff873d331ce72e9f9faaa4547d
+    image: grafana/otel-lgtm@sha256:764b657d5c750a151fbe2f9acd8cd8edeec873b8f5e3179380d7d08b69797c2e
     init: true
     restart: always
     ports:
